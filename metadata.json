@@ -1,0 +1,5 @@
+{
+  "name": "GymAssist AI",
+  "description": "An intelligent assistant for Indian gym owners to manage memberships, payments, renewals, and reminders.",
+  "requestFramePermissions": []
+}
