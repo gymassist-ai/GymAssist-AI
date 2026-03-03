@@ -3,13 +3,15 @@ import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export type Member = {
-  id: string;
+  id?: string;
   name: string;
   phone: string;
-  plan: string;
-  startDate: string;
+  plan_type: string;
+  start_date: string;
+  end_date?: string;
   fee: number;
-  amountPaid: number;
+  amount_paid: number;
+  status?: string;
 };
 
 export default function MemberModal({
@@ -24,30 +26,29 @@ export default function MemberModal({
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
-    plan: '1 Month',
-    startDate: new Date().toISOString().split('T')[0],
+    plan_type: '1 Month',
+    start_date: new Date().toISOString().split('T')[0],
     fee: '',
-    amountPaid: '',
+    amount_paid: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
-      id: Date.now().toString(),
       name: formData.name,
       phone: formData.phone,
-      plan: formData.plan,
-      startDate: formData.startDate,
+      plan_type: formData.plan_type,
+      start_date: formData.start_date,
       fee: Number(formData.fee),
-      amountPaid: Number(formData.amountPaid),
+      amount_paid: Number(formData.amount_paid),
     });
     setFormData({
       name: '',
       phone: '',
-      plan: '1 Month',
-      startDate: new Date().toISOString().split('T')[0],
+      plan_type: '1 Month',
+      start_date: new Date().toISOString().split('T')[0],
       fee: '',
-      amountPaid: '',
+      amount_paid: '',
     });
   };
 
@@ -104,8 +105,8 @@ export default function MemberModal({
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Plan</label>
                   <select
-                    value={formData.plan}
-                    onChange={(e) => setFormData({ ...formData, plan: e.target.value })}
+                    value={formData.plan_type}
+                    onChange={(e) => setFormData({ ...formData, plan_type: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm bg-white"
                   >
                     <option value="1 Month">1 Month</option>
@@ -119,8 +120,8 @@ export default function MemberModal({
                   <input
                     type="date"
                     required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                    value={formData.start_date}
+                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
                   />
                 </div>
@@ -144,8 +145,8 @@ export default function MemberModal({
                     type="number"
                     required
                     min="0"
-                    value={formData.amountPaid}
-                    onChange={(e) => setFormData({ ...formData, amountPaid: e.target.value })}
+                    value={formData.amount_paid}
+                    onChange={(e) => setFormData({ ...formData, amount_paid: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
                     placeholder="e.g. 1500"
                   />

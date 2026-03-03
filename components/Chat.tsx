@@ -98,34 +98,57 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem('gym_members');
-    if (stored) {
+    const fetchMembers = async () => {
       try {
-        setMembers(JSON.parse(stored));
+        const res = await fetch('/api/members');
+        if (res.ok) {
+          const data = await res.json();
+          setMembers(data);
+        }
       } catch (e) {
-        console.error('Failed to parse members', e);
+        console.error('Failed to fetch members', e);
       }
-    }
+    };
+    fetchMembers();
   }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSaveMember = (member: Member) => {
-    const updated = [...members, member];
-    setMembers(updated);
-    localStorage.setItem('gym_members', JSON.stringify(updated));
-    setIsMemberModalOpen(false);
+  const handleSaveMember = async (member: Member) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch('/api/members', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(member),
+      });
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: Date.now().toString(),
-        role: 'user',
-        content: `I have added a new member: ${member.name} (${member.phone}). Plan: ${member.plan}, Fee: ₹${member.fee}, Paid: ₹${member.amountPaid}.`,
-      },
-    ]);
+      if (res.ok) {
+        const newMember = await res.json();
+        setMembers((prev) => [...prev, newMember]);
+        setIsMemberModalOpen(false);
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            role: 'user',
+            content: `I have added a new member: ${newMember.name} (${newMember.phone}). Plan: ${newMember.plan_type}, Fee: ₹${newMember.fee}, Paid: ₹${newMember.amount_paid}.`,
+          },
+        ]);
+      } else {
+        const errorData = await res.json();
+        console.error('Failed to save member:', errorData.error);
+        alert(`Failed to save member: ${errorData.error}`);
+      }
+    } catch (e) {
+      console.error('Failed to save member', e);
+      alert('Failed to save member. Please check your connection and credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e?: React.FormEvent, textOverride?: string) => {
