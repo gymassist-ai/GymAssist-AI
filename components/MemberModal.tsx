@@ -4,51 +4,81 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export type Member = {
   id?: string;
-  name: string;
+  gym_owner_id: string;
+  member_id?: string;
+  member_name: string;
   phone: string;
-  plan_type: string;
-  start_date: string;
-  end_date?: string;
+  email?: string;
+  membership_plan: string;
+  membership_start: string;
+  membership_end: string;
+  member_upi_id?: string;
   fee: number;
-  amount_paid: number;
-  status?: string;
+  amuont_paid: number;
+  status: string;
+  created_at?: string;
 };
 
 export default function MemberModal({
   isOpen,
   onClose,
   onSave,
+  initialData,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSave: (member: Member) => void;
+  initialData?: Member | null;
 }) {
   const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    plan_type: '1 Month',
-    start_date: new Date().toISOString().split('T')[0],
-    fee: '',
-    amount_paid: '',
+    member_id: initialData?.member_id || '',
+    member_name: initialData?.member_name || '',
+    phone: initialData?.phone || '',
+    email: initialData?.email || '',
+    member_upi_id: initialData?.member_upi_id || '',
+    membership_plan: initialData?.membership_plan || '1 Month',
+    membership_start: initialData?.membership_start || new Date().toISOString().split('T')[0],
+    fee: initialData?.fee || 0,
+    amuont_paid: initialData?.amuont_paid || 0,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Calculate end date
+    const startDate = new Date(formData.membership_start);
+    let endDate = new Date(startDate);
+    if (formData.membership_plan === '1 Month') endDate.setMonth(endDate.getMonth() + 1);
+    else if (formData.membership_plan === '3 Months') endDate.setMonth(endDate.getMonth() + 3);
+    else if (formData.membership_plan === '6 Months') endDate.setMonth(endDate.getMonth() + 6);
+    else if (formData.membership_plan === '1 Year') endDate.setFullYear(endDate.getFullYear() + 1);
+
     onSave({
-      name: formData.name,
+      ...initialData,
+      member_id: formData.member_id || undefined,
+      member_name: formData.member_name,
       phone: formData.phone,
-      plan_type: formData.plan_type,
-      start_date: formData.start_date,
+      email: formData.email || undefined,
+      member_upi_id: formData.member_upi_id || undefined,
+      membership_plan: formData.membership_plan,
+      membership_start: formData.membership_start,
+      membership_end: endDate.toISOString().split('T')[0],
       fee: Number(formData.fee),
-      amount_paid: Number(formData.amount_paid),
+      amuont_paid: Number(formData.amuont_paid),
+      status: initialData?.status || 'Active',
+      gym_owner_id: initialData?.gym_owner_id || '', // Will be set by API/Chat
     });
+    
     setFormData({
-      name: '',
+      member_id: '',
+      member_name: '',
       phone: '',
-      plan_type: '1 Month',
-      start_date: new Date().toISOString().split('T')[0],
-      fee: '',
-      amount_paid: '',
+      email: '',
+      member_upi_id: '',
+      membership_plan: '1 Month',
+      membership_start: new Date().toISOString().split('T')[0],
+      fee: 0,
+      amuont_paid: 0,
     });
   };
 
@@ -70,7 +100,9 @@ export default function MemberModal({
             className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
           >
             <div className="flex items-center justify-between p-4 border-b border-neutral-100">
-              <h2 className="text-lg font-semibold text-neutral-900">New Member Onboarding</h2>
+              <h2 className="text-lg font-semibold text-neutral-900">
+                {initialData ? 'Edit Member Details' : 'New Member Onboarding'}
+              </h2>
               <button
                 onClick={onClose}
                 className="p-1 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
@@ -79,16 +111,28 @@ export default function MemberModal({
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                  placeholder="e.g. Amit Kumar"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Member ID (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.member_id || ''}
+                    onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                    placeholder="e.g. #ROH001"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.member_name}
+                    onChange={(e) => setFormData({ ...formData, member_name: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                    placeholder="e.g. Amit Kumar"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
@@ -103,10 +147,32 @@ export default function MemberModal({
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Email (Optional)</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                    placeholder="e.g. amit@example.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">UPI ID (Optional)</label>
+                  <input
+                    type="text"
+                    value={formData.member_upi_id}
+                    onChange={(e) => setFormData({ ...formData, member_upi_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                    placeholder="e.g. amit@okaxis"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">Plan</label>
                   <select
-                    value={formData.plan_type}
-                    onChange={(e) => setFormData({ ...formData, plan_type: e.target.value })}
+                    value={formData.membership_plan}
+                    onChange={(e) => setFormData({ ...formData, membership_plan: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm bg-white"
                   >
                     <option value="1 Month">1 Month</option>
@@ -120,8 +186,8 @@ export default function MemberModal({
                   <input
                     type="date"
                     required
-                    value={formData.start_date}
-                    onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                    value={formData.membership_start}
+                    onChange={(e) => setFormData({ ...formData, membership_start: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
                   />
                 </div>
@@ -134,9 +200,9 @@ export default function MemberModal({
                     required
                     min="0"
                     value={formData.fee}
-                    onChange={(e) => setFormData({ ...formData, fee: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, fee: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. 1500"
+                    placeholder="e.g. 3000"
                   />
                 </div>
                 <div>
@@ -145,8 +211,8 @@ export default function MemberModal({
                     type="number"
                     required
                     min="0"
-                    value={formData.amount_paid}
-                    onChange={(e) => setFormData({ ...formData, amount_paid: e.target.value })}
+                    value={formData.amuont_paid}
+                    onChange={(e) => setFormData({ ...formData, amuont_paid: Number(e.target.value) })}
                     className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
                     placeholder="e.g. 1500"
                   />
@@ -164,7 +230,7 @@ export default function MemberModal({
                   type="submit"
                   className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm"
                 >
-                  Save Member
+                  {initialData ? 'Update Member' : 'Save Member'}
                 </button>
               </div>
             </form>
