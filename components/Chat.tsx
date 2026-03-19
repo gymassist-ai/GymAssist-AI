@@ -8,6 +8,8 @@ import { Send, User, Bot, Dumbbell, Calendar, CreditCard, MessageSquare, Menu, X
 import { motion, AnimatePresence } from 'motion/react';
 import MemberModal, { Member } from './MemberModal';
 import BillModal from './BillModal';
+import DietPlanModal, { DietPlanData } from './DietPlanModal';
+import WorkoutPlanModal, { WorkoutPlanData } from './WorkoutPlanModal';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -66,7 +68,7 @@ function SettingsModal({ isOpen, onClose, upiId, onSave }: SettingsModalProps) {
   );
 }
 
-const SYSTEM_INSTRUCTION = `You are GymAssist AI – an intelligent assistant built specifically for Indian gym owners to manage memberships, payments, renewals, and reminders in a multi-tenant SaaS environment.
+const SYSTEM_INSTRUCTION = `You are GymAssist AI – an intelligent assistant built specifically for Indian gym owners to manage memberships, payments, renewals, reminders, diet plans, and workout plans in a multi-tenant SaaS environment.
 
 Always respond in clear, short, and professional language.
 
@@ -101,6 +103,40 @@ When adding a member, collect:
 - Member Name, Phone Number, Membership Plan (1/3/6/12 Months), Start Date, Total Fee (Compulsory), Amount Paid (Compulsory).
 - Calculate End Date automatically.
 
+### FEATURE 5: DIET PLAN GENERATION
+When a gym owner asks for a diet plan (e.g., "Generate diet plan for [member name]"), automatically start the Diet Plan Generator workflow. If the member exists, fetch available details.
+
+INTERACTIVE DATA COLLECTION:
+Do NOT ask the gym owner to type everything manually at once. Guide them with an interactive, user-friendly input flow. Request details step-by-step using simple prompts:
+- Step 1: Confirm Member ("Please confirm the member: [Member Name]")
+- Step 2: Goal (Weight Loss / Fat Loss / Muscle Gain / Maintenance)
+- Step 3: Age
+- Step 4: Height
+- Step 5: Weight
+- Step 6: Activity Level (Beginner / Moderate / Active)
+- Step 7: Dietary Preference (Vegetarian / Non Vegetarian / Vegan / Eggetarian)
+- Step 8: Budget Preference ("What is the member's daily food budget?" Options: Low Budget, Moderate Budget, High Budget). Adjust food choices based on this.
+- Step 9: Personal Meal Preferences ("Does the member have any meal preferences?" e.g., Likes chicken, Avoids dairy, etc.)
+- Step 10: Meals Per Day (3 / 4 / 5 / 6)
+- Step 11: Allergies or Medical Conditions (Optional)
+
+Once all details are collected, call the \`generateDietPlan\` tool. Ensure the food items match the dietary preference, budget level, and meal preferences. Provide a library of pre-defined meal options and allow gym owners to customize them or add their own recipes during the chat.
+
+### FEATURE 6: WORKOUT PLAN GENERATION
+When a gym owner asks for a workout plan (e.g., "Generate workout plan for [member name]"), automatically start the Workout Plan Generator workflow. If the member exists, fetch available details.
+
+INTERACTIVE DATA COLLECTION:
+Do NOT ask the gym owner to type everything manually at once. Guide them with an interactive, user-friendly input flow. Request details step-by-step using simple prompts:
+- Step 1: Confirm Member ("Please confirm the member: [Member Name]")
+- Step 2: Fitness Goal (Muscle Gain / Weight Loss / Fat Loss / Strength / General Fitness)
+- Step 3: Experience Level (Beginner / Intermediate / Advanced)
+- Step 4: Workout Days Per Week (3 days / 4 days / 5 days / 6 days)
+- Step 5: Workout Duration (30 minutes / 45 minutes / 60 minutes / 90 minutes)
+- Step 6: Target Muscle Groups (Full Body / Upper Lower Split / Push Pull Legs / Specific muscle groups)
+- Step 7: Injury or Limitation (Ask if the member has any injuries)
+
+Once all details are collected, call the \`generateWorkoutPlan\` tool to generate the structured workout plan.
+
 ### GENERAL BEHAVIOR RULES:
 1. Use INR (₹) currency format.
 2. Keep responses concise and practical.
@@ -117,6 +153,8 @@ type Message = {
     phone: string;
     message: string;
   };
+  dietPlan?: DietPlanData;
+  workoutPlan?: WorkoutPlanData;
 };
 
 const SUGGESTIONS = [
@@ -145,6 +183,10 @@ export default function Chat({ userId, upiId: initialUpiId, onLogout }: { userId
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
   const [isBillModalOpen, setIsBillModalOpen] = useState(false);
+  const [isDietPlanModalOpen, setIsDietPlanModalOpen] = useState(false);
+  const [isWorkoutPlanModalOpen, setIsWorkoutPlanModalOpen] = useState(false);
+  const [selectedDietPlan, setSelectedDietPlan] = useState<DietPlanData | null>(null);
+  const [selectedWorkoutPlan, setSelectedWorkoutPlan] = useState<WorkoutPlanData | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [selectedMemberForBill, setSelectedMemberForBill] = useState<Member | null>(null);
@@ -398,6 +440,109 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
         }
       };
 
+      const generateDietPlanDecl: FunctionDeclaration = {
+        name: 'generateDietPlan',
+        description: 'Generates a structured diet plan for a gym member after collecting all required details.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            memberName: { type: Type.STRING },
+            age: { type: Type.NUMBER },
+            gender: { type: Type.STRING },
+            height: { type: Type.STRING },
+            weight: { type: Type.STRING },
+            goal: { type: Type.STRING },
+            activityLevel: { type: Type.STRING },
+            dietaryPreference: { type: Type.STRING },
+            budgetPreference: { type: Type.STRING },
+            mealPreferences: { type: Type.STRING },
+            mealsPerDay: { type: Type.NUMBER },
+            allergies: { type: Type.STRING },
+            medicalConditions: { type: Type.STRING },
+            targetWeight: { type: Type.STRING },
+            dailyCalories: { type: Type.NUMBER },
+            macros: {
+              type: Type.OBJECT,
+              properties: {
+                protein: { type: Type.STRING },
+                carbs: { type: Type.STRING },
+                fats: { type: Type.STRING }
+              }
+            },
+            schedule: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  meal: { type: Type.STRING },
+                  items: { type: Type.STRING },
+                  portion: { type: Type.STRING }
+                }
+              }
+            },
+            guidelines: {
+              type: Type.OBJECT,
+              properties: {
+                water: { type: Type.STRING },
+                supplements: { type: Type.STRING },
+                avoid: { type: Type.STRING },
+                advice: { type: Type.STRING }
+              }
+            }
+          },
+          required: ['memberName', 'age', 'gender', 'height', 'weight', 'goal', 'activityLevel', 'dietaryPreference', 'budgetPreference', 'mealsPerDay', 'allergies', 'dailyCalories', 'macros', 'schedule', 'guidelines']
+        }
+      };
+
+      const generateWorkoutPlanDecl: FunctionDeclaration = {
+        name: 'generateWorkoutPlan',
+        description: 'Generates a structured workout plan for a gym member after collecting all required details.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            memberName: { type: Type.STRING },
+            goal: { type: Type.STRING },
+            experienceLevel: { type: Type.STRING },
+            daysPerWeek: { type: Type.NUMBER },
+            duration: { type: Type.STRING },
+            targetMuscleGroups: { type: Type.STRING },
+            injuries: { type: Type.STRING },
+            schedule: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  day: { type: Type.STRING },
+                  focus: { type: Type.STRING },
+                  exercises: {
+                    type: Type.ARRAY,
+                    items: {
+                      type: Type.OBJECT,
+                      properties: {
+                        name: { type: Type.STRING },
+                        sets: { type: Type.STRING },
+                        reps: { type: Type.STRING },
+                        rest: { type: Type.STRING }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            guidelines: {
+              type: Type.OBJECT,
+              properties: {
+                warmup: { type: Type.STRING },
+                cooldown: { type: Type.STRING },
+                recovery: { type: Type.STRING },
+                progressiveOverload: { type: Type.STRING }
+              }
+            }
+          },
+          required: ['memberName', 'goal', 'experienceLevel', 'daysPerWeek', 'duration', 'targetMuscleGroups', 'schedule', 'guidelines']
+        }
+      };
+
       const dynamicSystemInstruction = `${SYSTEM_INSTRUCTION}\n\nGYM OWNER UPI ID: ${upiId || 'Not Configured'}\n\nINSTRUCTIONS FOR UPI: If a UPI ID is provided above, you MUST include it in all payment reminders (WhatsApp/SMS) and invoice summaries to facilitate payment. If it is 'Not Configured', politely ask the owner to add it to their profile.\n\nCURRENT MEMBERS DATABASE:\n${JSON.stringify(members, null, 2)}`;
 
       const response = await ai.models.generateContent({
@@ -409,7 +554,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
         config: {
           systemInstruction: dynamicSystemInstruction,
           temperature: 0.2, // Keep it professional and consistent
-          tools: [{ functionDeclarations: [prepareWhatsAppDecl, prepareSMSDecl] }]
+          tools: [{ functionDeclarations: [prepareWhatsAppDecl, prepareSMSDecl, generateDietPlanDecl, generateWorkoutPlanDecl] }]
         },
       });
 
@@ -417,17 +562,35 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
         const call = response.functionCalls[0];
         const args = call.args as any;
 
-        const modelMessage: Message = {
-          id: (Date.now() + 1).toString(),
-          role: 'model',
-          content: `I have prepared the ${call.name === 'prepareWhatsApp' ? 'WhatsApp' : 'SMS'} message for you. Click the button below to open the app and send it.`,
-          action: {
-            type: call.name === 'prepareWhatsApp' ? 'whatsapp' : 'sms',
-            phone: args.phone,
-            message: args.message
-          }
-        };
-        setMessages((prev) => [...prev, modelMessage]);
+        if (call.name === 'generateDietPlan') {
+          const modelMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: `I have generated the personalized diet plan for **${args.memberName}**. You can view, download, or share it below.`,
+            dietPlan: args as DietPlanData
+          };
+          setMessages((prev) => [...prev, modelMessage]);
+        } else if (call.name === 'generateWorkoutPlan') {
+          const modelMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: `I have generated the personalized workout plan for **${args.memberName}**. You can view, download, or share it below.`,
+            workoutPlan: args as WorkoutPlanData
+          };
+          setMessages((prev) => [...prev, modelMessage]);
+        } else {
+          const modelMessage: Message = {
+            id: (Date.now() + 1).toString(),
+            role: 'model',
+            content: `I have prepared the ${call.name === 'prepareWhatsApp' ? 'WhatsApp' : 'SMS'} message for you. Click the button below to open the app and send it.`,
+            action: {
+              type: call.name === 'prepareWhatsApp' ? 'whatsapp' : 'sms',
+              phone: args.phone,
+              message: args.message
+            }
+          };
+          setMessages((prev) => [...prev, modelMessage]);
+        }
       } else {
         const modelMessage: Message = {
           id: (Date.now() + 1).toString(),
@@ -488,7 +651,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
   });
 
   return (
-    <div className="flex h-screen bg-neutral-50 font-sans text-neutral-900 overflow-hidden">
+    <>
+      <div className="flex h-screen bg-neutral-50 font-sans text-neutral-900 overflow-hidden print:hidden">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -797,6 +961,34 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                                   </a>
                                 </div>
                               )}
+                              {msg.dietPlan && (
+                                <div className="mt-4 not-prose">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedDietPlan(msg.dietPlan!);
+                                      setIsDietPlanModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors shadow-sm bg-emerald-600 hover:bg-emerald-700"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                    View Diet Plan
+                                  </button>
+                                </div>
+                              )}
+                              {msg.workoutPlan && (
+                                <div className="mt-4 not-prose">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedWorkoutPlan(msg.workoutPlan!);
+                                      setIsWorkoutPlanModalOpen(true);
+                                    }}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-colors shadow-sm bg-blue-600 hover:bg-blue-700"
+                                  >
+                                    <Dumbbell className="w-4 h-4" />
+                                    View Workout Plan
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -1022,6 +1214,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
           </AnimatePresence>
         </div>
       </div>
+      </div>
 
       <MemberModal
         key={selectedMember ? `edit-${selectedMember.member_name}` : 'new'}
@@ -1047,6 +1240,24 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
         owner_upi_id={upiId}
       />
 
+      <DietPlanModal
+        isOpen={isDietPlanModalOpen}
+        onClose={() => { setIsDietPlanModalOpen(false); setSelectedDietPlan(null); }}
+        dietPlan={selectedDietPlan}
+        gymName={userId}
+        memberEmail={selectedDietPlan ? members.find(m => m.member_name.toLowerCase() === selectedDietPlan.memberName.toLowerCase())?.email : undefined}
+        memberPhone={selectedDietPlan ? members.find(m => m.member_name.toLowerCase() === selectedDietPlan.memberName.toLowerCase())?.phone : undefined}
+      />
+
+      <WorkoutPlanModal
+        isOpen={isWorkoutPlanModalOpen}
+        onClose={() => { setIsWorkoutPlanModalOpen(false); setSelectedWorkoutPlan(null); }}
+        workoutPlan={selectedWorkoutPlan}
+        gymName={userId}
+        memberEmail={selectedWorkoutPlan ? members.find(m => m.member_name.toLowerCase() === selectedWorkoutPlan.memberName.toLowerCase())?.email : undefined}
+        memberPhone={selectedWorkoutPlan ? members.find(m => m.member_name.toLowerCase() === selectedWorkoutPlan.memberName.toLowerCase())?.phone : undefined}
+      />
+
       {/* Toast Notification */}
       <AnimatePresence>
         {toast && (
@@ -1063,6 +1274,6 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </>
   );
 }
