@@ -406,8 +406,21 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
     setInput('');
     setIsLoading(true);
 
+    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'model',
+          content: '⚠️ **API Key Missing**\n\nIt looks like the Gemini API key is not set. If you are running this locally, please add `NEXT_PUBLIC_GEMINI_API_KEY="your_api_key"` to your `.env.local` file and restart the server.',
+        },
+      ]);
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY || '' });
+      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
       
       const chatHistory = messages.filter(m => m.id !== 'welcome').map(m => ({
         role: m.role,
