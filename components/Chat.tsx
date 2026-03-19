@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { GoogleGenAI, Type, FunctionDeclaration } from '@google/genai';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Send, User, Bot, Dumbbell, Calendar, CreditCard, MessageSquare, Menu, X, Plus, MessageCircle, Smartphone, Users, LogOut, Settings, AlertCircle, LayoutDashboard, TrendingUp, Clock, UserPlus, Edit2, Copy, Check, FileText } from 'lucide-react';
@@ -67,82 +66,6 @@ function SettingsModal({ isOpen, onClose, upiId, onSave }: SettingsModalProps) {
     </AnimatePresence>
   );
 }
-
-const SYSTEM_INSTRUCTION = `You are GymAssist AI – an intelligent assistant built specifically for Indian gym owners to manage memberships, payments, renewals, reminders, diet plans, and workout plans in a multi-tenant SaaS environment.
-
-Always respond in clear, short, and professional language.
-
-### FEATURE 1: MEMBERSHIP EXPIRY REMINDER GENERATOR
-When a member's membership is about to expire or has expired, generate a friendly reminder message.
-Rules for reminders:
-- Message must be short, friendly, and motivating.
-- Mention the gym name and the expiry date.
-- Suitable for WhatsApp or SMS.
-- Return ONLY the message text without explanations when asked for a reminder.
-
-Example Output:
-Hi Rohit 👋
-Your membership at PowerHouse Gym is expiring on 20 March.
-Renew it soon to continue your workouts without interruption 💪
-Reply here if you want to renew your membership.
-
-### FEATURE 2: DASHBOARD UI CONTEXT AWARENESS
-You are aware of the dashboard sections: Total Members, Active Memberships, Expiring Memberships, Revenue Overview, and Member List.
-- If the owner asks about expiring memberships, suggest sending reminders.
-- Help them take action based on the dashboard data.
-
-### FEATURE 3: MEMBER QUICK ACTIONS GUIDANCE
-Explain briefly what these actions do if asked:
-- View Profile: See full member details.
-- Send Reminder: Quickly send a renewal reminder.
-- Generate Bill: Create an invoice and record payment.
-- Update Membership: Change plan or dates.
-
-### FEATURE 4: DATA MANAGEMENT (ADD/UPDATE)
-When adding a member, collect:
-- Member Name, Phone Number, Membership Plan (1/3/6/12 Months), Start Date, Total Fee (Compulsory), Amount Paid (Compulsory).
-- Calculate End Date automatically.
-
-### FEATURE 5: DIET PLAN GENERATION
-When a gym owner asks for a diet plan (e.g., "Generate diet plan for [member name]"), automatically start the Diet Plan Generator workflow. If the member exists, fetch available details.
-
-INTERACTIVE DATA COLLECTION:
-Do NOT ask the gym owner to type everything manually at once. Guide them with an interactive, user-friendly input flow. Request details step-by-step using simple prompts:
-- Step 1: Confirm Member ("Please confirm the member: [Member Name]")
-- Step 2: Goal (Weight Loss / Fat Loss / Muscle Gain / Maintenance)
-- Step 3: Age
-- Step 4: Height
-- Step 5: Weight
-- Step 6: Activity Level (Beginner / Moderate / Active)
-- Step 7: Dietary Preference (Vegetarian / Non Vegetarian / Vegan / Eggetarian)
-- Step 8: Budget Preference ("What is the member's daily food budget?" Options: Low Budget, Moderate Budget, High Budget). Adjust food choices based on this.
-- Step 9: Personal Meal Preferences ("Does the member have any meal preferences?" e.g., Likes chicken, Avoids dairy, etc.)
-- Step 10: Meals Per Day (3 / 4 / 5 / 6)
-- Step 11: Allergies or Medical Conditions (Optional)
-
-Once all details are collected, call the \`generateDietPlan\` tool. Ensure the food items match the dietary preference, budget level, and meal preferences. Provide a library of pre-defined meal options and allow gym owners to customize them or add their own recipes during the chat.
-
-### FEATURE 6: WORKOUT PLAN GENERATION
-When a gym owner asks for a workout plan (e.g., "Generate workout plan for [member name]"), automatically start the Workout Plan Generator workflow. If the member exists, fetch available details.
-
-INTERACTIVE DATA COLLECTION:
-Do NOT ask the gym owner to type everything manually at once. Guide them with an interactive, user-friendly input flow. Request details step-by-step using simple prompts:
-- Step 1: Confirm Member ("Please confirm the member: [Member Name]")
-- Step 2: Fitness Goal (Muscle Gain / Weight Loss / Fat Loss / Strength / General Fitness)
-- Step 3: Experience Level (Beginner / Intermediate / Advanced)
-- Step 4: Workout Days Per Week (3 days / 4 days / 5 days / 6 days)
-- Step 5: Workout Duration (30 minutes / 45 minutes / 60 minutes / 90 minutes)
-- Step 6: Target Muscle Groups (Full Body / Upper Lower Split / Push Pull Legs / Specific muscle groups)
-- Step 7: Injury or Limitation (Ask if the member has any injuries)
-
-Once all details are collected, call the \`generateWorkoutPlan\` tool to generate the structured workout plan.
-
-### GENERAL BEHAVIOR RULES:
-1. Use INR (₹) currency format.
-2. Keep responses concise and practical.
-3. Maintain a friendly but professional tone.
-4. Focus only on gym management assistance.
-5. Data isolation is strictly enforced by gym_owner_id.`;
 
 type Message = {
   id: string;
@@ -406,200 +329,50 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
     setInput('');
     setIsLoading(true);
 
-    if (!process.env.NEXT_PUBLIC_GEMINI_API_KEY) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: 'model',
-          content: '⚠️ **API Key Missing**\n\nIt looks like the Gemini API key is not set. If you are running this locally, please add `NEXT_PUBLIC_GEMINI_API_KEY="your_api_key"` to your `.env.local` file and restart the server.',
-        },
-      ]);
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
-      
-      const chatHistory = messages.filter(m => m.id !== 'welcome').map(m => ({
-        role: m.role,
-        parts: [{ text: m.content }],
-      }));
-
-      const prepareWhatsAppDecl: FunctionDeclaration = {
-        name: 'prepareWhatsApp',
-        description: 'Prepares a WhatsApp message link for the user to click and send.',
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            phone: { type: Type.STRING, description: 'Phone number with country code, e.g., 919876543210' },
-            message: { type: Type.STRING, description: 'The text message to send' }
-          },
-          required: ['phone', 'message']
-        }
-      };
-
-      const prepareSMSDecl: FunctionDeclaration = {
-        name: 'prepareSMS',
-        description: 'Prepares an SMS message link for the user to click and send.',
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            phone: { type: Type.STRING, description: 'Phone number' },
-            message: { type: Type.STRING, description: 'The text message to send' }
-          },
-          required: ['phone', 'message']
-        }
-      };
-
-      const generateDietPlanDecl: FunctionDeclaration = {
-        name: 'generateDietPlan',
-        description: 'Generates a structured diet plan for a gym member after collecting all required details.',
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            memberName: { type: Type.STRING },
-            age: { type: Type.NUMBER },
-            gender: { type: Type.STRING },
-            height: { type: Type.STRING },
-            weight: { type: Type.STRING },
-            goal: { type: Type.STRING },
-            activityLevel: { type: Type.STRING },
-            dietaryPreference: { type: Type.STRING },
-            budgetPreference: { type: Type.STRING },
-            mealPreferences: { type: Type.STRING },
-            mealsPerDay: { type: Type.NUMBER },
-            allergies: { type: Type.STRING },
-            medicalConditions: { type: Type.STRING },
-            targetWeight: { type: Type.STRING },
-            dailyCalories: { type: Type.NUMBER },
-            macros: {
-              type: Type.OBJECT,
-              properties: {
-                protein: { type: Type.STRING },
-                carbs: { type: Type.STRING },
-                fats: { type: Type.STRING }
-              }
-            },
-            schedule: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  meal: { type: Type.STRING },
-                  items: { type: Type.STRING },
-                  portion: { type: Type.STRING }
-                }
-              }
-            },
-            guidelines: {
-              type: Type.OBJECT,
-              properties: {
-                water: { type: Type.STRING },
-                supplements: { type: Type.STRING },
-                avoid: { type: Type.STRING },
-                advice: { type: Type.STRING }
-              }
-            }
-          },
-          required: ['memberName', 'age', 'gender', 'height', 'weight', 'goal', 'activityLevel', 'dietaryPreference', 'budgetPreference', 'mealsPerDay', 'allergies', 'dailyCalories', 'macros', 'schedule', 'guidelines']
-        }
-      };
-
-      const generateWorkoutPlanDecl: FunctionDeclaration = {
-        name: 'generateWorkoutPlan',
-        description: 'Generates a structured workout plan for a gym member after collecting all required details.',
-        parameters: {
-          type: Type.OBJECT,
-          properties: {
-            memberName: { type: Type.STRING },
-            goal: { type: Type.STRING },
-            experienceLevel: { type: Type.STRING },
-            daysPerWeek: { type: Type.NUMBER },
-            duration: { type: Type.STRING },
-            targetMuscleGroups: { type: Type.STRING },
-            injuries: { type: Type.STRING },
-            schedule: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  day: { type: Type.STRING },
-                  focus: { type: Type.STRING },
-                  exercises: {
-                    type: Type.ARRAY,
-                    items: {
-                      type: Type.OBJECT,
-                      properties: {
-                        name: { type: Type.STRING },
-                        sets: { type: Type.STRING },
-                        reps: { type: Type.STRING },
-                        rest: { type: Type.STRING }
-                      }
-                    }
-                  }
-                }
-              }
-            },
-            guidelines: {
-              type: Type.OBJECT,
-              properties: {
-                warmup: { type: Type.STRING },
-                cooldown: { type: Type.STRING },
-                recovery: { type: Type.STRING },
-                progressiveOverload: { type: Type.STRING }
-              }
-            }
-          },
-          required: ['memberName', 'goal', 'experienceLevel', 'daysPerWeek', 'duration', 'targetMuscleGroups', 'schedule', 'guidelines']
-        }
-      };
-
-      const dynamicSystemInstruction = `${SYSTEM_INSTRUCTION}\n\nGYM OWNER UPI ID: ${upiId || 'Not Configured'}\n\nINSTRUCTIONS FOR UPI: If a UPI ID is provided above, you MUST include it in all payment reminders (WhatsApp/SMS) and invoice summaries to facilitate payment. If it is 'Not Configured', politely ask the owner to add it to their profile.\n\nCURRENT MEMBERS DATABASE:\n${JSON.stringify(members, null, 2)}`;
-
-      const response = await ai.models.generateContent({
-        model: 'gemini-3-flash-preview',
-        contents: [
-          ...chatHistory,
-          { role: 'user', parts: [{ text: userMessage.content }] }
-        ],
-        config: {
-          systemInstruction: dynamicSystemInstruction,
-          temperature: 0.2, // Keep it professional and consistent
-          tools: [{ functionDeclarations: [prepareWhatsAppDecl, prepareSMSDecl, generateDietPlanDecl, generateWorkoutPlanDecl] }]
-        },
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages.filter(m => m.id !== 'welcome'), userMessage],
+          upiId,
+          members
+        })
       });
 
-      if (response.functionCalls && response.functionCalls.length > 0) {
-        const call = response.functionCalls[0];
-        const args = call.args as any;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to fetch response from server');
+      }
 
-        if (call.name === 'generateDietPlan') {
+      const data = await res.json();
+
+      if (data.type === 'functionCall') {
+        if (data.name === 'generateDietPlan') {
           const modelMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'model',
-            content: `I have generated the personalized diet plan for **${args.memberName}**. You can view, download, or share it below.`,
-            dietPlan: args as DietPlanData
+            content: data.content,
+            dietPlan: data.args as DietPlanData
           };
           setMessages((prev) => [...prev, modelMessage]);
-        } else if (call.name === 'generateWorkoutPlan') {
+        } else if (data.name === 'generateWorkoutPlan') {
           const modelMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'model',
-            content: `I have generated the personalized workout plan for **${args.memberName}**. You can view, download, or share it below.`,
-            workoutPlan: args as WorkoutPlanData
+            content: data.content,
+            workoutPlan: data.args as WorkoutPlanData
           };
           setMessages((prev) => [...prev, modelMessage]);
         } else {
           const modelMessage: Message = {
             id: (Date.now() + 1).toString(),
             role: 'model',
-            content: `I have prepared the ${call.name === 'prepareWhatsApp' ? 'WhatsApp' : 'SMS'} message for you. Click the button below to open the app and send it.`,
+            content: data.content,
             action: {
-              type: call.name === 'prepareWhatsApp' ? 'whatsapp' : 'sms',
-              phone: args.phone,
-              message: args.message
+              type: data.name === 'prepareWhatsApp' ? 'whatsapp' : 'sms',
+              phone: data.args.phone,
+              message: data.args.message
             }
           };
           setMessages((prev) => [...prev, modelMessage]);
@@ -608,7 +381,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
         const modelMessage: Message = {
           id: (Date.now() + 1).toString(),
           role: 'model',
-          content: response.text || 'Sorry, I could not process that request.',
+          content: data.content || 'Sorry, I could not process that request.',
         };
         setMessages((prev) => [...prev, modelMessage]);
       }
