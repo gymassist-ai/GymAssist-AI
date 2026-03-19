@@ -954,8 +954,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                                   <a
                                     href={
                                       msg.action.type === 'whatsapp'
-                                        ? `https://wa.me/${msg.action.phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg.action.message)}`
-                                        : `sms:${msg.action.phone.replace(/\D/g, '')}?body=${encodeURIComponent(msg.action.message)}`
+                                        ? `https://wa.me/${(msg.action.phone || '').replace(/\D/g, '')}?text=${encodeURIComponent(msg.action.message || '')}`
+                                        : `sms:${(msg.action.phone || '').replace(/\D/g, '')}?body=${encodeURIComponent(msg.action.message || '')}`
                                     }
                                     target="_blank"
                                     rel="noopener noreferrer"
