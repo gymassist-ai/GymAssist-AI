@@ -3,12 +3,14 @@
 import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Send, User, Bot, Dumbbell, Calendar, CreditCard, MessageSquare, Menu, X, Plus, MessageCircle, Smartphone, Users, LogOut, Settings, AlertCircle, LayoutDashboard, TrendingUp, Clock, UserPlus, Edit2, Copy, Check, FileText } from 'lucide-react';
+import { Send, User, Bot, Dumbbell, Calendar, CreditCard, MessageSquare, Menu, X, Plus, MessageCircle, Smartphone, Users, LogOut, Settings, AlertCircle, LayoutDashboard, TrendingUp, Clock, UserPlus, Edit2, Copy, Check, FileText, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { motion, AnimatePresence } from 'motion/react';
 import MemberModal, { Member } from './MemberModal';
 import BillModal from './BillModal';
 import DietPlanModal, { DietPlanData } from './DietPlanModal';
 import WorkoutPlanModal, { WorkoutPlanData } from './WorkoutPlanModal';
+import { ThemeToggle } from './ThemeToggle';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -35,23 +37,23 @@ function SettingsModal({ isOpen, onClose, upiId, onSave }: SettingsModalProps) {
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6"
+            className="relative w-full max-w-sm bg-white dark:bg-neutral-900 rounded-2xl shadow-xl p-6 transition-colors"
           >
             <h2 className="text-xl font-bold mb-4">Profile Settings</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">UPI ID for Payments</label>
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-1">UPI ID for Payments</label>
                 <input
                   type="text"
                   value={newUpiId}
                   onChange={(e) => setNewUpiId(e.target.value)}
                   placeholder="e.g. gym@okaxis"
-                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                  className="w-full px-3 py-2 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white rounded-xl outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors"
                 />
                 <p className="text-[10px] text-neutral-400 mt-1">This ID will be included in all payment reminders.</p>
               </div>
               <div className="flex justify-end gap-2 pt-2">
-                <button onClick={onClose} className="px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-100 rounded-xl">Cancel</button>
+                <button onClick={onClose} className="px-4 py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">Cancel</button>
                 <button 
                   onClick={() => onSave(newUpiId)}
                   className="px-4 py-2 text-sm bg-emerald-600 text-white rounded-xl hover:bg-emerald-700"
@@ -88,6 +90,8 @@ const SUGGESTIONS = [
 ];
 
 export default function Chat({ userId, upiId: initialUpiId, onLogout }: { userId: string; upiId: string | null; onLogout: () => void }) {
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
   const [activeView, setActiveView] = useState<'chat' | 'members' | 'dashboard'>('dashboard');
   const [upiId, setUpiId] = useState(initialUpiId || '');
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,6 +119,10 @@ export default function Chat({ userId, upiId: initialUpiId, onLogout }: { userId
   const [selectedMemberForBill, setSelectedMemberForBill] = useState<Member | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -438,7 +446,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
 
   return (
     <>
-      <div className="flex h-screen bg-neutral-50 font-sans text-neutral-900 overflow-hidden print:hidden">
+      <div className="flex h-screen bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-50 overflow-hidden print:hidden transition-colors">
       {/* Mobile Sidebar Overlay */}
       <AnimatePresence>
         {isSidebarOpen && (
@@ -454,16 +462,19 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
 
       {/* Sidebar */}
       <motion.div
-        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-neutral-200 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
+        className={`fixed md:static inset-y-0 left-0 z-50 w-72 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-800 flex flex-col transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}`}
       >
-        <div className="p-4 border-b border-neutral-200 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-emerald-600 font-bold text-xl">
+        <div className="p-4 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between transition-colors">
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xl">
             <Dumbbell className="w-6 h-6" />
             <span>GymAssist AI</span>
           </div>
-          <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-neutral-500 hover:bg-neutral-100 rounded-md">
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <button onClick={() => setIsSidebarOpen(false)} className="md:hidden p-1 text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-4">
@@ -480,8 +491,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
               onClick={() => { setActiveView('dashboard'); setIsSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeView === 'dashboard'
-                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-50'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
               }`}
             >
               <LayoutDashboard className="w-5 h-5" />
@@ -491,8 +502,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
               onClick={() => { setActiveView('chat'); setIsSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeView === 'chat'
-                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-50'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
               }`}
             >
               <MessageSquare className="w-5 h-5" />
@@ -502,8 +513,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
               onClick={() => { setActiveView('members'); setIsSidebarOpen(false); }}
               className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
                 activeView === 'members'
-                  ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                  : 'text-neutral-600 hover:bg-neutral-50'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 shadow-sm'
+                  : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800'
               }`}
             >
               <Users className="w-5 h-5" />
@@ -511,13 +522,13 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
             </button>
           </div>
 
-          <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Quick Actions</h3>
+          <h3 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">Quick Actions</h3>
           <div className="space-y-2">
             {SUGGESTIONS.map((suggestion, index) => (
               <button
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="w-full text-left p-3 text-sm bg-neutral-50 hover:bg-emerald-50 hover:text-emerald-700 border border-neutral-100 rounded-xl transition-colors flex items-start gap-3 group"
+                className="w-full text-left p-3 text-sm bg-neutral-50 dark:bg-neutral-800 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-700 dark:hover:text-emerald-400 border border-neutral-100 dark:border-neutral-700 rounded-xl transition-colors flex items-start gap-3 group"
               >
                 <MessageSquare className="w-4 h-4 mt-0.5 text-neutral-400 group-hover:text-emerald-500 shrink-0" />
                 <span className="leading-snug">{suggestion}</span>
@@ -526,8 +537,8 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
           </div>
 
           <div className="mt-8">
-            <h3 className="text-xs font-semibold text-neutral-500 uppercase tracking-wider mb-3">Features</h3>
-            <ul className="space-y-3 text-sm text-neutral-600">
+            <h3 className="text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider mb-3">Features</h3>
+            <ul className="space-y-3 text-sm text-neutral-600 dark:text-neutral-400">
               <li className="flex items-center gap-3"><User className="w-4 h-4 text-neutral-400" /> Membership Tracking</li>
               <li className="flex items-center gap-3"><CreditCard className="w-4 h-4 text-neutral-400" /> Payment Status</li>
               <li className="flex items-center gap-3"><Calendar className="w-4 h-4 text-neutral-400" /> Renewal Alerts</li>
@@ -536,20 +547,20 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
           </div>
         </div>
         
-        <div className="p-4 border-t border-neutral-200">
+        <div className="p-4 border-t border-neutral-200 dark:border-neutral-800 transition-colors">
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold text-xs">
+            <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center font-bold text-xs">
               {userId.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-neutral-900 truncate">{userId}</p>
-              <p className="text-[10px] text-neutral-500 truncate">Gym Owner</p>
+              <p className="text-sm font-semibold text-neutral-900 dark:text-white truncate">{userId}</p>
+              <p className="text-[10px] text-neutral-500 dark:text-neutral-400 truncate">Gym Owner</p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="flex items-center justify-center gap-2 p-2 text-xs font-medium text-neutral-600 hover:bg-neutral-50 border border-neutral-100 rounded-lg transition-colors"
+              className="flex items-center justify-center gap-2 p-2 text-xs font-medium text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 rounded-lg transition-colors"
             >
               <Settings className="w-3.5 h-3.5" />
               Settings
@@ -569,22 +580,31 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
       {/* Main Chat Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
-        <header className="h-16 border-b border-neutral-200 bg-white flex items-center px-4 shrink-0 z-10">
+        <header className="h-16 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 flex items-center px-4 shrink-0 z-10 transition-colors">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="md:hidden p-2 -ml-2 mr-2 text-neutral-600 hover:bg-neutral-100 rounded-md"
+            className="md:hidden p-2 -ml-2 mr-2 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-md transition-colors"
           >
             <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-3">
-            <h1 className="font-bold text-neutral-900 tracking-tight">
+            <h1 className="font-bold text-neutral-900 dark:text-white tracking-tight">
               {activeView === 'dashboard' ? 'Dashboard' : activeView === 'chat' ? 'AI Assistant' : 'Members Management'}
             </h1>
           </div>
-          <div className="ml-auto flex items-center gap-2 md:hidden">
+          <div className="ml-auto flex items-center gap-2">
+            {mounted && (
+              <button
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                className="p-2 text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                aria-label="Toggle Dark Mode"
+              >
+                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+              </button>
+            )}
             <button 
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-neutral-500 hover:text-emerald-600 rounded-lg"
+              className="md:hidden p-2 text-neutral-500 dark:text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 rounded-lg"
             >
               <Settings className="w-5 h-5" />
             </button>
@@ -604,54 +624,54 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
               >
                 <div className="max-w-5xl mx-auto space-y-6">
                   <header className="mb-8">
-                    <h2 className="text-2xl font-bold text-neutral-900">Gym Dashboard</h2>
-                    <p className="text-neutral-500">Overview of your gym&apos;s performance today.</p>
+                    <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Gym Dashboard</h2>
+                    <p className="text-neutral-500 dark:text-neutral-400">Overview of your gym&apos;s performance today.</p>
                   </header>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
-                      <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-4">
+                    <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors">
+                      <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center mb-4">
                         <Users className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-medium text-neutral-500">Active Members</p>
-                      <h3 className="text-2xl font-bold text-neutral-900">{stats.totalActive}</h3>
+                      <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Active Members</p>
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.totalActive}</h3>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
-                      <div className="w-12 h-12 bg-amber-100 text-amber-600 rounded-xl flex items-center justify-center mb-4">
+                    <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors">
+                      <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-xl flex items-center justify-center mb-4">
                         <Clock className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-medium text-neutral-500">Expiring Soon</p>
-                      <h3 className="text-2xl font-bold text-neutral-900">{stats.expiringSoon}</h3>
+                      <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Expiring Soon</p>
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.expiringSoon}</h3>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
-                      <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-xl flex items-center justify-center mb-4">
+                    <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors">
+                      <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl flex items-center justify-center mb-4">
                         <TrendingUp className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-medium text-neutral-500">Pending Amount</p>
-                      <h3 className="text-2xl font-bold text-neutral-900">₹{stats.pendingPayments.toLocaleString()}</h3>
+                      <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">Pending Amount</p>
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">₹{stats.pendingPayments.toLocaleString()}</h3>
                     </div>
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
-                      <div className="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-4">
+                    <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors">
+                      <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-xl flex items-center justify-center mb-4">
                         <UserPlus className="w-6 h-6" />
                       </div>
-                      <p className="text-sm font-medium text-neutral-500">New Today</p>
-                      <h3 className="text-2xl font-bold text-neutral-900">{stats.newToday}</h3>
+                      <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">New Today</p>
+                      <h3 className="text-2xl font-bold text-neutral-900 dark:text-white">{stats.newToday}</h3>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div className="bg-white p-6 rounded-2xl shadow-sm border border-neutral-100">
+                    <div className="bg-white dark:bg-neutral-900 p-6 rounded-2xl shadow-sm border border-neutral-100 dark:border-neutral-800 transition-colors">
                       <div className="flex items-center justify-between mb-4">
-                        <h4 className="font-semibold text-neutral-900 flex items-center gap-2">
-                          <TrendingUp className="w-4 h-4 text-emerald-600" />
+                        <h4 className="font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
+                          <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                           Monthly Finance Report
                         </h4>
                         <button 
                           onClick={() => handleCopyReport(financeReport)}
-                          className="p-2 text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                          className="p-2 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all"
                           title="Copy Report"
                         >
-                          {isCopied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                          {isCopied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
                         </button>
                       </div>
                       <div className="bg-neutral-900 rounded-xl p-6 text-emerald-50 font-mono text-sm relative overflow-hidden">
@@ -677,7 +697,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                         </p>
                         <button 
                           onClick={() => setActiveView('chat')}
-                          className="bg-white text-emerald-900 px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-50 transition-colors"
+                          className="bg-white dark:bg-neutral-800 text-emerald-900 dark:text-emerald-100 px-4 py-2 rounded-xl text-sm font-bold hover:bg-emerald-50 dark:hover:bg-neutral-700 transition-colors"
                         >
                           Ask AI Assistant
                         </button>
@@ -696,7 +716,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                 className="flex-1 flex flex-col overflow-hidden"
               >
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-neutral-50/50">
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6 bg-neutral-50/50 dark:bg-neutral-950/50">
                   {messages.map((msg) => (
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
@@ -706,21 +726,21 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                     >
                       <div className={`flex gap-3 max-w-[85%] md:max-w-[75%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                         <div className={`w-8 h-8 shrink-0 rounded-full flex items-center justify-center ${
-                          msg.role === 'user' ? 'bg-neutral-800 text-white' : 'bg-emerald-600 text-white'
+                          msg.role === 'user' ? 'bg-neutral-800 dark:bg-neutral-700 text-white' : 'bg-emerald-600 text-white'
                         }`}>
                           {msg.role === 'user' ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
                         </div>
                         <div
                           className={`p-4 rounded-2xl ${
                             msg.role === 'user'
-                              ? 'bg-neutral-800 text-white rounded-tr-sm'
-                              : 'bg-white border border-neutral-200 shadow-sm rounded-tl-sm text-neutral-800'
+                              ? 'bg-neutral-800 dark:bg-neutral-700 text-white rounded-tr-sm'
+                              : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm rounded-tl-sm text-neutral-800 dark:text-neutral-200'
                           }`}
                         >
                           {msg.role === 'user' ? (
                             <p className="whitespace-pre-wrap text-sm">{msg.content}</p>
                           ) : (
-                            <div className="prose prose-sm prose-neutral max-w-none prose-p:leading-relaxed prose-pre:bg-neutral-100 prose-pre:text-neutral-800 prose-strong:text-neutral-900 prose-ul:my-2 prose-li:my-0">
+                            <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-neutral-100 dark:prose-pre:bg-neutral-800 prose-pre:text-neutral-800 dark:prose-pre:text-neutral-200 prose-strong:text-neutral-900 dark:prose-strong:text-white prose-ul:my-2 prose-li:my-0">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                               {msg.action && (
                                 <div className="mt-4 not-prose">
@@ -791,7 +811,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                         <div className="w-8 h-8 shrink-0 rounded-full bg-emerald-600 text-white flex items-center justify-center">
                           <Bot className="w-5 h-5" />
                         </div>
-                        <div className="p-4 rounded-2xl bg-white border border-neutral-200 shadow-sm rounded-tl-sm flex items-center gap-2">
+                        <div className="p-4 rounded-2xl bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 shadow-sm rounded-tl-sm flex items-center gap-2 transition-colors">
                           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                           <div className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -803,11 +823,11 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                 </div>
 
                 {/* Input Area */}
-                <div className="p-4 bg-white border-t border-neutral-200">
+                <div className="p-4 bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800 transition-colors">
                   <div className="max-w-4xl mx-auto">
                     <form
                       onSubmit={handleSubmit}
-                      className="relative flex items-end gap-2 bg-neutral-50 border border-neutral-200 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all"
+                      className="relative flex items-end gap-2 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-2xl p-2 focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500 transition-all"
                     >
                       <textarea
                         value={input}
@@ -819,7 +839,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                           }
                         }}
                         placeholder="Type membership details, payment info, or ask for a summary..."
-                        className="w-full max-h-32 min-h-[44px] bg-transparent border-none focus:ring-0 resize-none py-2.5 px-3 text-sm text-neutral-900 placeholder:text-neutral-400"
+                        className="w-full max-h-32 min-h-[44px] bg-transparent border-none focus:ring-0 resize-none py-2.5 px-3 text-sm text-neutral-900 dark:text-white placeholder:text-neutral-400 dark:placeholder:text-neutral-500"
                         rows={1}
                         style={{
                           height: 'auto',
@@ -833,7 +853,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                       <button
                         type="submit"
                         disabled={!input.trim() || isLoading}
-                        className="shrink-0 w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-neutral-200 disabled:text-neutral-400 text-white flex items-center justify-center transition-colors"
+                        className="shrink-0 w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-neutral-200 dark:disabled:bg-neutral-700 disabled:text-neutral-400 dark:disabled:text-neutral-500 text-white flex items-center justify-center transition-colors"
                       >
                         <Send className="w-4 h-4 ml-0.5" />
                       </button>
@@ -852,13 +872,13 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="flex-1 overflow-y-auto p-4 md:p-8 bg-white"
+                className="flex-1 overflow-y-auto p-4 md:p-8 bg-white dark:bg-neutral-900 transition-colors"
               >
                 <div className="max-w-6xl mx-auto">
                   <div className="flex items-center justify-between mb-8">
                     <div>
-                      <h2 className="text-2xl font-bold text-neutral-900">Gym Members</h2>
-                      <p className="text-neutral-500 text-sm">Manage and track all your gym memberships</p>
+                      <h2 className="text-2xl font-bold text-neutral-900 dark:text-white">Gym Members</h2>
+                      <p className="text-neutral-500 dark:text-neutral-400 text-sm">Manage and track all your gym memberships</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <div className="relative">
@@ -867,7 +887,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                           placeholder="Search members..."
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          className="pl-9 pr-4 py-2 border border-neutral-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-64"
+                          className="pl-9 pr-4 py-2 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white rounded-xl text-sm outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 w-64 transition-colors"
                         />
                         <User className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
                       </div>
@@ -889,7 +909,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                         className={`px-4 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                           statusFilter === f 
                             ? 'bg-emerald-600 text-white shadow-md' 
-                            : 'bg-white text-neutral-600 border border-neutral-200 hover:border-emerald-200'
+                            : 'bg-white dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border border-neutral-200 dark:border-neutral-700 hover:border-emerald-200 dark:hover:border-emerald-800'
                         }`}
                       >
                         {f} {f === 'Expiring Soon' ? '(7 Days)' : ''}
@@ -897,55 +917,55 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                     ))}
                   </div>
 
-                  <div className="bg-white border border-neutral-200 rounded-2xl overflow-hidden shadow-sm">
+                  <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl overflow-hidden shadow-sm transition-colors">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
-                          <tr className="bg-neutral-50 border-b border-neutral-200">
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Member</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Plan</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Dates</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Payment</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 uppercase tracking-wider text-right">Actions</th>
+                          <tr className="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Member</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Plan</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Dates</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Payment</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider text-right">Actions</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-neutral-100">
+                        <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800">
                           {filteredMembers.length > 0 ? (
                             filteredMembers.map((member, idx) => (
                               <tr 
                                 key={idx} 
-                                className={`group hover:bg-emerald-50/30 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-neutral-50/30'}`}
+                                className={`group hover:bg-emerald-50/30 dark:hover:bg-emerald-900/20 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-neutral-900' : 'bg-neutral-50/30 dark:bg-neutral-800/50'}`}
                               >
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 font-bold text-sm group-hover:bg-emerald-100 group-hover:text-emerald-600 transition-colors">
+                                    <div className="w-10 h-10 rounded-full bg-neutral-100 dark:bg-neutral-800 flex items-center justify-center text-neutral-600 dark:text-neutral-400 font-bold text-sm group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
                                       {member.member_name.charAt(0)}
                                     </div>
                                     <div>
-                                      <div className="text-sm font-semibold text-neutral-900">
+                                      <div className="text-sm font-semibold text-neutral-900 dark:text-white">
                                         {member.member_name}
-                                        {member.member_id && <span className="ml-2 text-xs font-normal text-neutral-500 bg-neutral-100 px-1.5 py-0.5 rounded-md">{member.member_id}</span>}
+                                        {member.member_id && <span className="ml-2 text-xs font-normal text-neutral-500 dark:text-neutral-400 bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 rounded-md">{member.member_id}</span>}
                                       </div>
-                                      <div className="text-xs text-neutral-500">{member.phone}</div>
+                                      <div className="text-xs text-neutral-500 dark:text-neutral-400">{member.phone}</div>
                                       {member.email && <div className="text-[10px] text-neutral-400">{member.email}</div>}
                                     </div>
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 text-neutral-800">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
                                     {member.membership_plan}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4">
-                                  <div className="text-xs text-neutral-600">
+                                  <div className="text-xs text-neutral-600 dark:text-neutral-400">
                                     <div>Start: {member.membership_start}</div>
                                     <div className="font-medium">End: {member.membership_end}</div>
                                   </div>
                                 </td>
                                 <td className="px-6 py-4">
                                   <div className="text-xs">
-                                    <div className="text-neutral-900 font-bold">₹{member.amuont_paid || 0} / ₹{member.fee || 0}</div>
+                                    <div className="text-neutral-900 dark:text-white font-bold">₹{member.amuont_paid || 0} / ₹{member.fee || 0}</div>
                                     <div className="text-[10px] text-neutral-400">
                                       {Number(member.fee || 0) - Number(member.amuont_paid || 0) > 0 ? 
                                         `Pending: ₹${Number(member.fee || 0) - Number(member.amuont_paid || 0)}` : 
@@ -955,9 +975,9 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                                 </td>
                                 <td className="px-6 py-4">
                                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    member.status === 'Active' ? 'bg-emerald-100 text-emerald-800' :
-                                    member.status === 'Expired' ? 'bg-red-100 text-red-800' :
-                                    'bg-neutral-100 text-neutral-800'
+                                    member.status === 'Active' ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300' :
+                                    member.status === 'Expired' ? 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300' :
+                                    'bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200'
                                   }`}>
                                     {member.status}
                                   </span>
@@ -966,15 +986,15 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                                   <div className="flex items-center justify-end gap-2">
                                     <button
                                       onClick={() => { setSelectedMemberForBill(member); setIsBillModalOpen(true); }}
-                                      className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all group/bill relative"
+                                      className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all group/bill relative"
                                       title="Generate Bill"
                                     >
                                       <FileText className="w-4 h-4" />
-                                      <span className="absolute bottom-full right-0 mb-2 hidden group-hover/bill:block bg-neutral-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">Generate Bill</span>
+                                      <span className="absolute bottom-full right-0 mb-2 hidden group-hover/bill:block bg-neutral-800 dark:bg-neutral-700 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap">Generate Bill</span>
                                     </button>
                                     <button
                                       onClick={() => handleEditMember(member)}
-                                      className="p-2 text-neutral-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all"
+                                      className="p-2 text-neutral-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-all"
                                       title="Edit Member"
                                     >
                                       <Edit2 className="w-4 h-4" />
@@ -985,7 +1005,7 @@ Expired Members: ${members.filter(m => m.status === 'Expired').length}
                             ))
                           ) : (
                             <tr>
-                              <td colSpan={5} className="px-6 py-12 text-center text-neutral-500 italic">
+                              <td colSpan={5} className="px-6 py-12 text-center text-neutral-500 dark:text-neutral-400 italic">
                                 No members found. Add your first member to get started!
                               </td>
                             </tr>
