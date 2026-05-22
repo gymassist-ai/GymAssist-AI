@@ -1,0 +1,12 @@
+# Copy this file to .dev.vars for local Cloudflare preview.
+# Do not commit the real .dev.vars file.
+
+SUPABASE_URL="YOUR_SUPABASE_URL"
+SUPABASE_SERVICE_ROLE_KEY="YOUR_SUPABASE_SERVICE_ROLE_KEY"
+SUPABASE_PUBLISHABLE_KEY="YOUR_SUPABASE_PUBLISHABLE_KEY"
+
+# Any one of SESSION_SECRET, JWT_SECRET, or AUTH_SESSION_SECRET works.
+# Use a long random value. Keep the same value in Cloudflare production.
+SESSION_SECRET="YOUR_LONG_RANDOM_SESSION_SECRET"
+
+GROQ_API_KEY="YOUR_GROQ_API_KEY"

@@ -1,56 +1,44 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Chat from '@/components/Chat';
-import Login from '@/components/Login';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Home() {
-  const [userId, setUserId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('gym_assist_user_id');
-    }
-    return null;
-  });
-  const [upiId, setUpiId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('gym_assist_upi_id');
-    }
-    return null;
-  });
-  const [isReady, setIsReady] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    setTimeout(() => setIsReady(true), 0);
-  }, []);
+    const restoreSession = async () => {
+      const userId = localStorage.getItem('gym_assist_user_id');
+      if (userId) {
+        router.replace('/dashboard');
+        return;
+      }
 
-  const handleLogin = (id: string, upi: string | null) => {
-    setUserId(id);
-    setUpiId(upi);
-    localStorage.setItem('gym_assist_user_id', id);
-    if (upi) {
-      localStorage.setItem('gym_assist_upi_id', upi);
-    } else {
-      localStorage.removeItem('gym_assist_upi_id');
-    }
-  };
+      const res = await fetch('/api/auth/session').catch(() => null);
+      if (!res?.ok) {
+        router.replace('/login');
+        return;
+      }
 
-  const handleLogout = () => {
-    setUserId(null);
-    setUpiId(null);
-    localStorage.removeItem('gym_assist_user_id');
-    localStorage.removeItem('gym_assist_upi_id');
-  };
+      const data = await res.json();
+      if (data.userId) {
+        localStorage.setItem('gym_assist_user_id', data.userId);
+        if (data.upiId) localStorage.setItem('gym_assist_upi_id', data.upiId);
+        router.replace('/dashboard');
+        return;
+      }
 
-  if (!isReady) return null;
+      router.replace('/login');
+    };
 
-  if (!userId) {
-    return <Login onLogin={handleLogin} />;
-  }
+    restoreSession();
+  }, [router]);
 
   return (
-    <main className="min-h-screen bg-neutral-50 dark:bg-neutral-950 transition-colors">
-      <Chat userId={userId} upiId={upiId} onLogout={handleLogout} />
+    <main className="grid min-h-screen place-items-center bg-[#050806] text-white">
+      <div className="rounded-lg border border-white/10 bg-white/[0.055] px-5 py-4 text-sm text-white/60 backdrop-blur-xl">
+        Opening GymAssist AI...
+      </div>
     </main>
   );
 }
-

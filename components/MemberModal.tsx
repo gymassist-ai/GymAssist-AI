@@ -1,6 +1,9 @@
+'use client';
+
 import { useState } from 'react';
-import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { X, UserPlus } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
+import { calculateMembershipEndDate, getStandardFeeForPlan, MEMBERSHIP_PLAN_OPTIONS, type StandardMembershipFees } from '@/lib/membership';
 
 export type Member = {
   id?: string;
@@ -14,8 +17,17 @@ export type Member = {
   membership_end: string;
   member_upi_id?: string;
   fee: number;
+  total_fee?: number;
+  amount_paid?: number;
+  pending_dues?: number;
+  payment_status?: 'Fully Paid' | 'Partially Paid' | 'Pending';
   amuont_paid: number;
   status: string;
+  last_renewal_date?: string;
+  last_renewal_plan?: string;
+  renewal_count?: number;
+  recurring_fee?: number;
+  current_period_start?: string;
   created_at?: string;
 };
 
@@ -24,11 +36,13 @@ export default function MemberModal({
   onClose,
   onSave,
   initialData,
+  standardFees,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSave: (member: Member) => void;
   initialData?: Member | null;
+  standardFees?: StandardMembershipFees;
 }) {
   const [formData, setFormData] = useState({
     member_id: initialData?.member_id || '',
@@ -38,20 +52,16 @@ export default function MemberModal({
     member_upi_id: initialData?.member_upi_id || '',
     membership_plan: initialData?.membership_plan || '1 Month',
     membership_start: initialData?.membership_start || new Date().toISOString().split('T')[0],
-    fee: initialData?.fee || 0,
+    fee: initialData?.fee || getStandardFeeForPlan(initialData?.membership_plan || '1 Month', standardFees) || 0,
     amuont_paid: initialData?.amuont_paid || 0,
   });
 
+  const inputClass =
+    'w-full rounded-lg border border-white/10 bg-white/[0.06] px-3 py-2.5 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-emerald-300/60 focus:ring-4 focus:ring-emerald-300/10';
+  const labelClass = 'mb-1.5 block text-xs font-semibold uppercase tracking-[0.14em] text-white/48';
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Calculate end date
-    const startDate = new Date(formData.membership_start);
-    let endDate = new Date(startDate);
-    if (formData.membership_plan === '1 Month') endDate.setMonth(endDate.getMonth() + 1);
-    else if (formData.membership_plan === '3 Months') endDate.setMonth(endDate.getMonth() + 3);
-    else if (formData.membership_plan === '6 Months') endDate.setMonth(endDate.getMonth() + 6);
-    else if (formData.membership_plan === '1 Year') endDate.setFullYear(endDate.getFullYear() + 1);
 
     onSave({
       ...initialData,
@@ -62,13 +72,15 @@ export default function MemberModal({
       member_upi_id: formData.member_upi_id || undefined,
       membership_plan: formData.membership_plan,
       membership_start: formData.membership_start,
-      membership_end: endDate.toISOString().split('T')[0],
+      membership_end: calculateMembershipEndDate(formData.membership_start, formData.membership_plan),
       fee: Number(formData.fee),
+      total_fee: Number(formData.fee),
+      amount_paid: Number(formData.amuont_paid),
       amuont_paid: Number(formData.amuont_paid),
       status: initialData?.status || 'Active',
-      gym_owner_id: initialData?.gym_owner_id || '', // Will be set by API/Chat
+      gym_owner_id: initialData?.gym_owner_id || '',
     });
-    
+
     setFormData({
       member_id: '',
       member_name: '',
@@ -77,7 +89,7 @@ export default function MemberModal({
       member_upi_id: '',
       membership_plan: '1 Month',
       membership_start: new Date().toISOString().split('T')[0],
-      fee: 0,
+      fee: getStandardFeeForPlan('1 Month', standardFees) || 0,
       amuont_paid: 0,
     });
   };
@@ -85,152 +97,167 @@ export default function MemberModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-0">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/72 backdrop-blur-md"
           />
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.97, y: 18 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+            exit={{ opacity: 0, scale: 0.97, y: 18 }}
+            className="relative flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-white/10 bg-[#0c120e]/95 text-white shadow-2xl shadow-black/50"
           >
-            <div className="flex items-center justify-between p-4 border-b border-neutral-100">
-              <h2 className="text-lg font-semibold text-neutral-900">
-                {initialData ? 'Edit Member Details' : 'New Member Onboarding'}
-              </h2>
+            <div className="flex items-center justify-between border-b border-white/10 p-5">
+              <div className="flex items-center gap-3">
+                <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-300 text-emerald-950 shadow-lg shadow-emerald-500/20">
+                  <UserPlus className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-300/80">Member</p>
+                  <h2 className="text-lg font-semibold tracking-tight text-white">
+                    {initialData ? 'Edit member details' : 'New member onboarding'}
+                  </h2>
+                </div>
+              </div>
               <button
                 onClick={onClose}
-                className="p-1 text-neutral-400 hover:text-neutral-600 hover:bg-neutral-100 rounded-lg transition-colors"
+                className="grid h-9 w-9 place-items-center rounded-lg border border-white/10 text-white/55 transition hover:bg-white/10 hover:text-white"
+                aria-label="Close member modal"
               >
-                <X className="w-5 h-5" />
+                <X className="h-4 w-4" />
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-4 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+
+            <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-5">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Member ID (Optional)</label>
+                  <label className={labelClass}>Member ID</label>
                   <input
                     type="text"
-                    value={formData.member_id || ''}
+                    value={formData.member_id}
                     onChange={(e) => setFormData({ ...formData, member_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. #ROH001"
+                    className={inputClass}
+                    placeholder="#GA-1024"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Full Name</label>
+                  <label className={labelClass}>Full name</label>
                   <input
                     type="text"
                     required
                     value={formData.member_name}
                     onChange={(e) => setFormData({ ...formData, member_name: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. Amit Kumar"
+                    className={inputClass}
+                    placeholder="Amit Kumar"
                   />
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-neutral-700 mb-1">Phone Number</label>
-                <input
-                  type="tel"
-                  required
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                  placeholder="e.g. 9876543210"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Email (Optional)</label>
+                  <label className={labelClass}>Phone number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    className={inputClass}
+                    placeholder="9876543210"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Email</label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. amit@example.com"
+                    className={inputClass}
+                    placeholder="amit@example.com"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">UPI ID (Optional)</label>
+                  <label className={labelClass}>UPI ID</label>
                   <input
                     type="text"
                     value={formData.member_upi_id}
                     onChange={(e) => setFormData({ ...formData, member_upi_id: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. amit@okaxis"
+                    className={inputClass}
+                    placeholder="amit@okaxis"
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Plan</label>
+                  <label className={labelClass}>Plan</label>
                   <select
                     value={formData.membership_plan}
-                    onChange={(e) => setFormData({ ...formData, membership_plan: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm bg-white"
+                    onChange={(e) => {
+                      const membershipPlan = e.target.value;
+                      const standardFee = getStandardFeeForPlan(membershipPlan, standardFees);
+                      setFormData({
+                        ...formData,
+                        membership_plan: membershipPlan,
+                        fee: standardFee > 0 ? standardFee : formData.fee,
+                      });
+                    }}
+                    className={inputClass}
                   >
-                    <option value="1 Month">1 Month</option>
-                    <option value="3 Months">3 Months</option>
-                    <option value="6 Months">6 Months</option>
-                    <option value="1 Year">1 Year</option>
+                    {MEMBERSHIP_PLAN_OPTIONS.map((plan) => (
+                      <option key={plan.value} className="bg-[#0c120e]" value={plan.value}>
+                        {plan.value}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Start Date</label>
+                  <label className={labelClass}>Start date</label>
                   <input
                     type="date"
                     required
                     value={formData.membership_start}
                     onChange={(e) => setFormData({ ...formData, membership_start: e.target.value })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
+                    className={inputClass}
                   />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Total Fee (₹)</label>
+                  <label className={labelClass}>Total fee (INR)</label>
                   <input
                     type="number"
                     required
                     min="0"
                     value={formData.fee}
                     onChange={(e) => setFormData({ ...formData, fee: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. 3000"
+                    className={inputClass}
+                    placeholder="3000"
                   />
+                  <p className="mt-1.5 text-xs text-white/38">Prefills from settings when you choose a plan, but you can edit it for offers.</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">Amount Paid (₹)</label>
+                  <label className={labelClass}>Amount paid (INR)</label>
                   <input
                     type="number"
                     required
                     min="0"
                     value={formData.amuont_paid}
                     onChange={(e) => setFormData({ ...formData, amuont_paid: Number(e.target.value) })}
-                    className="w-full px-3 py-2 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all text-sm"
-                    placeholder="e.g. 1500"
+                    className={inputClass}
+                    placeholder="1500"
                   />
                 </div>
               </div>
-              <div className="pt-4 flex justify-end gap-2">
+
+              <div className="mt-6 flex flex-col-reverse gap-2 border-t border-white/10 pt-5 sm:flex-row sm:justify-end">
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-neutral-600 hover:bg-neutral-100 rounded-xl transition-colors"
+                  className="rounded-lg border border-white/10 px-4 py-2.5 text-sm font-semibold text-white/62 transition hover:bg-white/10 hover:text-white"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors shadow-sm"
+                  className="rounded-lg bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-emerald-950 shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-200"
                 >
-                  {initialData ? 'Update Member' : 'Save Member'}
+                  {initialData ? 'Update member' : 'Save member'}
                 </button>
               </div>
             </form>
