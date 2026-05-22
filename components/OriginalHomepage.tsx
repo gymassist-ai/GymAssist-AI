@@ -1,0 +1,2386 @@
+'use client';
+
+import { useEffect } from 'react';
+
+const homepageStyles = String.raw`/* ════════════════════════════════════════════════════
+   DESIGN TOKENS
+════════════════════════════════════════════════════ */
+:root {
+  --bg:        #070a08;
+  --bg2:       #0d120f;
+  --bg3:       #121a15;
+  --surface:   rgba(255,255,255,.038);
+  --surface2:  rgba(255,255,255,.06);
+  --blue:      #10b981;
+  --blue-l:    #34d399;
+  --cyan:      #14b8a6;
+  --cyan-l:    #6ee7b7;
+  --green:     #31f08a;
+  --emerald:   #6ee7b7;
+  --red:       #ef4444;
+  --gold:      #f59e0b;
+  --amber:     #fbbf24;
+  --ink:       #050705;
+  --text:      #f3f7f1;
+  --text2:     #a5b1a8;
+  --text3:     #6f7a72;
+  --border:    rgba(110,231,183,.16);
+  --border2:   rgba(236,253,245,.08);
+  --glow:      rgba(49,240,138,.22);
+  --glow2:     rgba(20,184,166,.16);
+  --r:         8px;
+  --r2:        8px;
+  --r3:        8px;
+}
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+
+body {
+  font-family:'Inter',sans-serif;
+  background:var(--bg); color:var(--text);
+  font-size:16px; line-height:1.65;
+  overflow-x:hidden;
+}
+
+h1,h2,h3,h4,h5 {
+  font-family:'Manrope',sans-serif;
+  line-height:1.12; letter-spacing:0;
+}
+
+a { color:inherit; text-decoration:none; }
+img { display:block; max-width:100%; }
+
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--blue); border-radius:99px; }
+
+/* ── LAYOUT ── */
+.wrap { max-width:1140px; margin:0 auto; padding:0 28px; }
+.section { padding:110px 0; }
+
+/* ── NOISE ── */
+body::after {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.025'/%3E%3C/svg%3E");
+  opacity:.5; mix-blend-mode:overlay;
+}
+
+/* ════════════════════════════════════════════════════
+   NAVBAR
+════════════════════════════════════════════════════ */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:500;
+  padding:0 28px;
+  background:rgba(4,6,15,.8);
+  backdrop-filter:blur(20px) saturate(1.5);
+  border-bottom:1px solid var(--border2);
+  transition:background .3s;
+}
+.nav-inner {
+  max-width:1140px; margin:0 auto;
+  height:68px; display:flex; align-items:center; gap:22px;
+}
+.logo {
+  font-family:'Manrope',sans-serif; font-weight:800; font-size:1.05rem;
+  background:linear-gradient(130deg,var(--blue-l),var(--cyan-l));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  flex-shrink:0;
+}
+.nav-mid { display:flex; gap:4px; margin:0 auto; }
+.nav-mid a {
+  padding:7px 12px; border-radius:8px;
+  font-size:.875rem; font-weight:500; color:var(--text2);
+  transition:background .2s, color .2s;
+}
+.nav-mid a:hover { background:var(--surface); color:var(--text); }
+.nav-right { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.nav-login {
+  padding:8px 20px; border-radius:9px;
+  border:1px solid var(--border2); background:var(--surface);
+  font-size:.875rem; font-weight:600; color:var(--text);
+  font-family:'Inter',sans-serif; cursor:pointer;
+  transition:background .2s, border-color .2s;
+}
+.nav-login:hover { background:var(--surface2); border-color:var(--border); }
+.nav-brochure {
+  padding:8px 14px; border-radius:9px;
+  border:1px solid rgba(20,184,166,.24); background:rgba(20,184,166,.08);
+  font-size:.875rem; font-weight:700; color:var(--cyan-l);
+  transition:background .2s, border-color .2s, transform .2s;
+}
+.nav-brochure:hover { background:rgba(20,184,166,.14); border-color:rgba(20,184,166,.42); transform:translateY(-1px); }
+.nav-cta {
+  padding:9px 18px; border-radius:9px;
+  background:linear-gradient(135deg,var(--blue),var(--blue-l));
+  font-size:.875rem; font-weight:700; color:#fff;
+  box-shadow:0 0 20px var(--glow);
+  transition:transform .2s, box-shadow .2s;
+}
+.nav-cta:hover { transform:translateY(-1px); box-shadow:0 0 32px var(--glow); }
+
+/* Hamburger */
+.ham { display:none; flex-direction:column; gap:5px; cursor:pointer; background:none; border:0; padding:8px; }
+.ham span { width:22px; height:2px; background:var(--text); border-radius:2px; transition:.3s; }
+
+/* Mobile nav */
+.mob-menu {
+  position:fixed; inset:0; z-index:490;
+  background:rgba(4,6,15,.97);
+  backdrop-filter:blur(24px);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
+  transform:translateX(100%); transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+.mob-menu.open { transform:translateX(0); }
+.mob-menu a { font-size:1.5rem; font-weight:700; color:var(--text); transition:color .2s; }
+.mob-menu a:hover { color:var(--cyan-l); }
+.mob-x { position:absolute; top:22px; right:28px; font-size:1.5rem; color:var(--text2); cursor:pointer; background:none; border:none; }
+
+/* ════════════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════════════ */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'Manrope',sans-serif; font-weight:700;
+  border-radius:11px; border:none; cursor:pointer;
+  transition:transform .18s, box-shadow .18s;
+  text-decoration:none;
+}
+.btn:hover { transform:translateY(-2px); }
+.btn-p {
+  padding:14px 30px; font-size:1rem;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  color:#fff; box-shadow:0 0 28px var(--glow), 0 0 60px rgba(20,184,166,.12);
+}
+.btn-p:hover { box-shadow:0 0 40px var(--glow), 0 0 80px rgba(20,184,166,.2); }
+.btn-g {
+  padding:13px 26px; font-size:.95rem;
+  background:var(--surface); border:1px solid var(--border2); color:var(--text);
+}
+.btn-g:hover { background:var(--surface2); border-color:var(--border); }
+.btn-sm { padding:11px 24px; font-size:.9rem; }
+.btn-subtle {
+  padding:13px 24px; font-size:.95rem;
+  background:rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.22); color:var(--cyan-l);
+}
+.btn-subtle:hover { background:rgba(20,184,166,.14); border-color:rgba(20,184,166,.4); }
+
+/* ════════════════════════════════════════════════════
+   SECTION LABELS
+════════════════════════════════════════════════════ */
+.label {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:5px 14px; border-radius:99px;
+  border:1px solid var(--border); background:rgba(49,240,138,.08);
+  font-size:.72rem; font-weight:700; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--cyan-l);
+  margin-bottom:20px;
+}
+.label::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan-l); box-shadow:0 0 8px var(--cyan-l); }
+
+.sh { /* section heading */
+  font-size:3rem;
+  font-weight:800; margin-bottom:18px; color:var(--text);
+}
+.sh em { font-style:normal; background:linear-gradient(90deg,var(--blue-l),var(--cyan-l)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+
+.sp { font-size:1.05rem; color:var(--text2); max-width:580px; }
+.center { text-align:center; }
+.center .sp { margin:0 auto; }
+
+/* ── ANIMATIONS ── */
+.fade { opacity:0; transform:translateY(24px); transition:opacity .65s, transform .65s; }
+.fade.in { opacity:1; transform:translateY(0); }
+.fade-l { opacity:0; transform:translateX(-24px); transition:opacity .65s, transform .65s; }
+.fade-l.in { opacity:1; transform:translateX(0); }
+.fade-r { opacity:0; transform:translateX(24px); transition:opacity .65s, transform .65s; }
+.fade-r.in { opacity:1; transform:translateX(0); }
+
+/* ════════════════════════════════════════════════════
+   §1 HERO
+════════════════════════════════════════════════════ */
+#hero {
+  min-height:100vh; display:flex; align-items:center;
+  padding-top:80px; position:relative; overflow:hidden;
+}
+.hero-orb {
+  position:absolute; border-radius:50%; pointer-events:none;
+  filter:blur(100px);
+}
+.o1 { width:650px; height:650px; background:radial-gradient(circle,rgba(49,240,138,.22),transparent 70%); top:-100px; right:-100px; }
+.o2 { width:450px; height:450px; background:radial-gradient(circle,rgba(20,184,166,.16),transparent 70%); bottom:0; left:-100px; }
+.o3 { width:300px; height:300px; background:radial-gradient(circle,rgba(49,240,138,.1),transparent 70%); top:40%; left:40%; }
+
+.hero-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  align-items:center; gap:64px;
+  position:relative; z-index:1;
+}
+.hero-pill {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:6px 16px; border-radius:99px;
+  border:1px solid rgba(49,240,138,.35); background:rgba(49,240,138,.1);
+  font-size:.78rem; font-weight:700; color:var(--cyan-l);
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:28px;
+}
+.hp-dot { width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.8s infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+.hero h1 { font-size:3.8rem; font-weight:800; margin-bottom:22px; }
+.hero p { font-size:1.12rem; color:var(--text2); max-width:500px; margin-bottom:36px; }
+.hero-btns { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:44px; }
+
+.hero-trust { display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
+.ht-avatars { display:flex; }
+.ht-avatars span {
+  width:34px; height:34px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.75rem; font-weight:800; font-family:'Manrope',sans-serif;
+  border:2px solid var(--bg);
+  margin-left:-8px;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  color:#fff;
+}
+.ht-avatars span:first-child { margin-left:0; }
+.ht-txt { font-size:.85rem; color:var(--text2); }
+.ht-txt strong { color:var(--text); }
+.ht-stars { color:var(--gold); letter-spacing:1px; }
+
+/* ── Dashboard ── */
+.hero-visual { position:relative; }
+.hero-brand-mark {
+  position:absolute; top:-34px; right:-30px; z-index:3;
+  width:104px; height:104px; border-radius:24px;
+  object-fit:cover;
+  opacity:.9;
+  box-shadow:0 22px 70px rgba(49,240,138,.18);
+  filter:saturate(1.05);
+}
+.dash {
+  background:rgba(7,11,24,.9);
+  border:1px solid var(--border2);
+  border-radius:20px; overflow:hidden;
+  box-shadow:0 0 100px var(--glow), 0 50px 100px rgba(0,0,0,.6);
+  position:relative;
+}
+.dash-bar {
+  padding:14px 20px;
+  background:rgba(255,255,255,.025);
+  border-bottom:1px solid var(--border2);
+  display:flex; align-items:center; gap:8px;
+}
+.db-dot { width:10px;height:10px;border-radius:50%; }
+.dbd1{background:#ff5f56;} .dbd2{background:#ffbd2e;} .dbd3{background:#27c93f;}
+.db-label { font-size:.72rem; color:var(--text3); margin-left:auto; letter-spacing:.06em; text-transform:uppercase; font-weight:600; }
+.dash-body { padding:18px; }
+
+.metric-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:12px; }
+.metric {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:12px; padding:14px 16px;
+  transition:border-color .3s;
+}
+.metric:hover { border-color:var(--border); }
+.m-icon { font-size:1.1rem; margin-bottom:6px; }
+.m-lbl { font-size:.68rem; color:var(--text3); text-transform:uppercase; letter-spacing:.07em; }
+.m-val { font-family:'Manrope',sans-serif; font-size:1.1rem; font-weight:700; margin-top:3px; }
+.m-val.c { color:var(--cyan-l); }
+.m-val.g { color:var(--green); }
+.m-val.r { color:var(--red); }
+.m-delta { font-size:.68rem; color:var(--green); margin-top:2px; }
+
+.dash-chat { background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:12px; }
+.dc-row { display:flex; flex-direction:column; gap:8px; }
+.dc-msg {
+  padding:9px 13px; border-radius:10px; font-size:.8rem;
+}
+.dc-u { background:rgba(49,240,138,.15); border:1px solid rgba(49,240,138,.25); color:var(--text); align-self:flex-end; max-width:85%; }
+.dc-a { background:rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.2); color:var(--cyan-l); max-width:90%; }
+.dc-lbl { font-size:.62rem; color:var(--text3); margin-bottom:4px; font-weight:600; letter-spacing:.05em; text-transform:uppercase; }
+
+/* Floating cards */
+.fc {
+  position:absolute; background:rgba(4,6,15,.92);
+  border:1px solid var(--border); border-radius:13px; padding:11px 16px;
+  backdrop-filter:blur(14px);
+  box-shadow:0 12px 40px rgba(0,0,0,.5);
+  font-size:.78rem;
+  animation:float 3.5s ease-in-out infinite;
+}
+.fc:nth-child(2){ animation-delay:1.4s; animation-duration:4s; }
+.fc-i { font-size:1.1rem; margin-bottom:4px; }
+.fc-v { font-family:'Manrope',sans-serif; font-weight:700; font-size:.95rem; color:var(--cyan-l); }
+.fc-s { font-size:.7rem; color:var(--text2); }
+.fc1 { bottom:-22px; left:-30px; }
+.fc2 { top:-18px; right:-26px; }
+@keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+
+/* ════════════════════════════════════════════════════
+   §2 PAIN POINTS
+════════════════════════════════════════════════════ */
+#pain { background:var(--bg2); }
+.pain-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:56px; }
+.pain-card {
+  background:var(--surface); border:1px solid rgba(239,68,68,.18);
+  border-radius:var(--r2); padding:32px 26px;
+  position:relative; overflow:hidden;
+  transition:transform .3s, border-color .3s, box-shadow .3s;
+}
+.pain-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:2px;
+  background:linear-gradient(90deg,transparent,var(--red),transparent);
+}
+.pain-card:hover { transform:translateY(-6px); border-color:rgba(239,68,68,.4); box-shadow:0 16px 48px rgba(239,68,68,.08); }
+.pain-x { font-size:2.2rem; margin-bottom:18px; line-height:1; }
+.pain-card h3 { font-size:1.05rem; font-weight:700; margin-bottom:10px; }
+.pain-card p { color:var(--text2); font-size:.9rem; line-height:1.65; }
+
+/* ════════════════════════════════════════════════════
+   §3 SOLUTION
+════════════════════════════════════════════════════ */
+#solution { position:relative; overflow:hidden; }
+.sol-ring {
+  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:700px; height:700px; border-radius:50%;
+  background:radial-gradient(circle,rgba(49,240,138,.13),transparent 65%);
+  pointer-events:none;
+}
+.sol-inner {
+  position:relative; z-index:1;
+  display:grid; grid-template-columns:1fr 1fr; gap:72px; align-items:center;
+}
+.sol-tags-wrap { display:flex; flex-direction:column; gap:12px; margin-top:28px; }
+.sol-tag {
+  display:flex; align-items:center; gap:14px;
+  padding:16px 20px; border-radius:13px;
+  background:var(--surface); border:1px solid var(--border2);
+  transition:border-color .3s, background .3s;
+}
+.sol-tag:hover { border-color:var(--border); background:var(--surface2); }
+.st-icon {
+  width:38px; height:38px; border-radius:10px; flex-shrink:0;
+  background:rgba(49,240,138,.15); border:1px solid rgba(49,240,138,.25);
+  display:flex; align-items:center; justify-content:center; font-size:.95rem;
+}
+.st-text strong { display:block; font-size:.9rem; margin-bottom:2px; }
+.st-text span { font-size:.8rem; color:var(--text2); }
+
+.sol-visual {
+  background:rgba(7,11,24,.85); border:1px solid var(--border);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 0 80px var(--glow);
+}
+.sv-header {
+  padding:16px 22px; border-bottom:1px solid var(--border2);
+  background:var(--surface); display:flex; align-items:center; gap:12px;
+}
+.sv-circle {
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:.85rem;font-family:'Manrope',sans-serif;color:#fff;
+}
+.sv-name { font-weight:700; font-size:.9rem; }
+.sv-sub { font-size:.72rem; color:var(--green); margin-top:1px; }
+.sv-dot { width:8px;height:8px;border-radius:50%;background:var(--green);margin-left:auto;box-shadow:0 0 8px var(--green); }
+.sv-body { padding:20px; display:flex; flex-direction:column; gap:10px; }
+.sv-msg { padding:11px 15px; border-radius:11px; font-size:.82rem; }
+.sv-u { background:rgba(49,240,138,.13);border:1px solid rgba(49,240,138,.22);color:var(--text);align-self:flex-end;max-width:85%; }
+.sv-a { background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.18);color:var(--cyan-l);max-width:90%; }
+
+/* ════════════════════════════════════════════════════
+   §3B DEMO VIDEO
+════════════════════════════════════════════════════ */
+#demo { background:var(--bg2); position:relative; overflow:hidden; }
+#demo::before {
+  content:''; position:absolute; inset:auto -10% -22% -10%; height:360px;
+  background:radial-gradient(ellipse at 50% 50%, rgba(20,184,166,.12), transparent 70%);
+  pointer-events:none;
+}
+.demo-grid {
+  position:relative; z-index:1;
+  display:grid; grid-template-columns:1.08fr .92fr; gap:56px; align-items:center;
+}
+.video-shell {
+  background:rgba(7,11,24,.92); border:1px solid var(--border);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 0 70px rgba(20,184,166,.14), 0 30px 80px rgba(0,0,0,.42);
+}
+.video-frame { position:relative; aspect-ratio:16/9; background:#000; overflow:hidden; }
+.video-frame iframe {
+  position:absolute; inset:0; width:100%; height:100%; border:0;
+}
+.video-thumb {
+  position:absolute; inset:0; border:0; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  background:
+    linear-gradient(180deg,rgba(3,7,18,.05),rgba(3,7,18,.72)),
+    url("https://img.youtube.com/vi/JlPtqbcmPu8/maxresdefault.jpg") center/cover;
+}
+.video-thumb::before {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(49,240,138,.16),rgba(20,184,166,.06));
+}
+.video-play {
+  position:relative; z-index:1;
+  width:74px; height:74px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  color:#fff; font-size:1.7rem;
+  box-shadow:0 18px 55px rgba(20,184,166,.35);
+}
+.video-play span { transform:translateX(2px); }
+.video-thumb-text {
+  position:absolute; left:20px; right:20px; bottom:18px; z-index:1;
+  display:flex; align-items:flex-end; justify-content:space-between; gap:18px;
+}
+.video-thumb-text strong { font-family:'Manrope',sans-serif; font-size:1rem; }
+.video-thumb-text span { color:var(--text2); font-size:.82rem; }
+.video-caption {
+  display:flex; align-items:center; justify-content:space-between; gap:14px;
+  padding:15px 18px; border-top:1px solid var(--border2);
+  background:rgba(255,255,255,.025);
+}
+.video-caption strong { font-size:.9rem; }
+.video-caption span { font-size:.78rem; color:var(--text2); }
+.demo-copy .sp { margin-bottom:26px; }
+.demo-points { display:flex; flex-direction:column; gap:12px; margin-bottom:28px; }
+.demo-point {
+  display:flex; align-items:center; gap:12px;
+  padding:14px 16px; border-radius:13px;
+  background:var(--surface); border:1px solid var(--border2);
+  font-size:.92rem; font-weight:700;
+}
+.demo-point::before {
+  content:'✓'; width:24px; height:24px; border-radius:7px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  color:var(--green); background:rgba(16,185,129,.12); border:1px solid rgba(16,185,129,.25);
+  font-size:.78rem; font-weight:800;
+}
+.demo-badges {
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-top:22px;
+}
+.demo-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 12px; border-radius:99px;
+  background:rgba(16,185,129,.08); border:1px solid rgba(16,185,129,.2);
+  color:var(--text); font-size:.78rem; font-weight:700;
+}
+.demo-badge::before { content:'✓'; color:var(--green); font-weight:800; }
+
+/* ════════════════════════════════════════════════════
+   §4 FEATURES
+════════════════════════════════════════════════════ */
+#features { background:var(--bg2); }
+.feat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:56px; }
+.feat-card {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:var(--r2); padding:28px 24px;
+  position:relative; overflow:hidden;
+  transition:transform .3s, border-color .3s, box-shadow .3s;
+}
+.feat-card::after {
+  content:''; position:absolute; inset:0;
+  background:linear-gradient(135deg,rgba(49,240,138,.06),transparent 60%);
+  opacity:0; transition:opacity .3s; border-radius:var(--r2);
+}
+.feat-card:hover { transform:translateY(-5px); border-color:var(--border); box-shadow:0 0 36px rgba(49,240,138,.12); }
+.feat-card:hover::after { opacity:1; }
+.fi {
+  width:48px;height:48px;border-radius:13px;flex-shrink:0;
+  background:rgba(49,240,138,.12);border:1px solid rgba(49,240,138,.22);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.25rem;margin-bottom:18px;position:relative;z-index:1;
+}
+.feat-card h3 { font-size:.98rem;font-weight:700;margin-bottom:8px;position:relative;z-index:1; }
+.feat-card p { color:var(--text2);font-size:.86rem;line-height:1.6;position:relative;z-index:1; }
+
+/* ════════════════════════════════════════════════════
+   §5 AUTOMATION
+════════════════════════════════════════════════════ */
+#auto { background:var(--bg); }
+.auto-grid { display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center; }
+.auto-list { display:flex; flex-direction:column; gap:14px; margin-top:32px; }
+.al-item {
+  display:flex; gap:16px; align-items:flex-start;
+  padding:20px; border-radius:14px;
+  background:var(--surface); border:1px solid var(--border2);
+  transition:border-color .3s;
+}
+.al-item:hover { border-color:var(--border); }
+.al-ic {
+  width:40px;height:40px;border-radius:11px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;font-size:.95rem;
+}
+.al-txt strong { display:block; font-size:.95rem; font-weight:700; margin-bottom:3px; }
+.al-txt span { font-size:.83rem; color:var(--text2); }
+
+/* Flow diagram */
+.flow {
+  background:rgba(7,11,24,.85); border:1px solid var(--border);
+  border-radius:var(--r3); padding:34px 28px;
+  box-shadow:0 0 60px var(--glow);
+}
+.flow-title { font-size:.75rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text2); margin-bottom:24px; }
+.fn {
+  display:flex; align-items:center; gap:14px;
+  padding:14px 18px; border-radius:13px;
+  background:var(--surface); border:1px solid var(--border2);
+}
+.fn-ic { font-size:1.3rem; flex-shrink:0; }
+.fn-lbl { font-family:'Manrope',sans-serif; font-weight:700; font-size:.9rem; }
+.fn-sub { font-size:.75rem; color:var(--text2); margin-top:1px; }
+.fa {
+  display:flex; justify-content:center; align-items:center;
+  padding:10px 0; color:var(--blue-l); position:relative;
+}
+.fa::before {
+  content:''; position:absolute; left:50%; width:1px; top:0; bottom:0;
+  background:linear-gradient(to bottom,var(--blue),var(--cyan));
+  transform:translateX(-50%);
+}
+.fa span { background:var(--bg3); padding:0 6px; position:relative; z-index:1; font-size:1.1rem; }
+
+/* ════════════════════════════════════════════════════
+   §6 ANALYTICS
+════════════════════════════════════════════════════ */
+#analytics { background:var(--bg2); }
+.analytics-inner { display:grid; grid-template-columns:1fr 1fr; gap:72px; align-items:center; }
+.ana-visual {
+  background:rgba(7,11,24,.85); border:1px solid var(--border);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 0 60px rgba(20,184,166,.12);
+}
+.ana-header {
+  padding:16px 22px; border-bottom:1px solid var(--border2);
+  background:var(--surface); display:flex; align-items:center; justify-content:space-between;
+}
+.ana-title { font-family:'Manrope',sans-serif; font-weight:700; font-size:.9rem; }
+.ana-badge { font-size:.72rem; color:var(--green); background:rgba(16,185,129,.1); border:1px solid rgba(16,185,129,.25); padding:3px 10px; border-radius:99px; }
+.ana-body { padding:20px; }
+.chart-bars { display:flex; align-items:flex-end; gap:8px; height:90px; margin-bottom:14px; }
+.bar-wrap { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.bar {
+  width:100%; border-radius:5px 5px 0 0;
+  background:linear-gradient(to top,var(--blue),var(--cyan));
+  transition:height .6s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.bar.hi { opacity:1; box-shadow:0 0 12px var(--glow); }
+.bar.lo { opacity:.35; }
+.bar-lbl { font-size:.65rem; color:var(--text3); }
+.ana-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+.as-item { background:var(--surface); border:1px solid var(--border2); border-radius:10px; padding:12px 14px; }
+.as-num { font-family:'Manrope',sans-serif; font-weight:800; font-size:1.1rem; color:var(--cyan-l); }
+.as-lbl { font-size:.7rem; color:var(--text2); margin-top:2px; }
+
+.ana-right .sp { margin-bottom:28px; }
+.ana-points { display:flex; flex-direction:column; gap:10px; }
+.ap { display:flex; align-items:center; gap:10px; font-size:.9rem; }
+.ap::before { content:''; width:8px; height:8px; border-radius:50%; background:var(--cyan-l); flex-shrink:0; box-shadow:0 0 6px var(--cyan-l); }
+
+/* ════════════════════════════════════════════════════
+   §7 TESTIMONIALS
+════════════════════════════════════════════════════ */
+#testimonials { background:var(--bg); }
+.testi-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:56px; }
+.testi-card {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:var(--r2); padding:26px 22px;
+  transition:border-color .3s, transform .3s;
+}
+.testi-card:hover { border-color:var(--border); transform:translateY(-4px); }
+.tc-stars { color:var(--gold); font-size:.9rem; letter-spacing:2px; margin-bottom:14px; }
+.tc-quote { color:var(--text2); font-size:.88rem; line-height:1.7; font-style:italic; margin-bottom:20px; }
+.tc-author { display:flex; align-items:center; gap:12px; }
+.ta-av {
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Manrope',sans-serif;font-weight:800;font-size:.85rem;color:#fff;
+  flex-shrink:0;
+}
+.ta-n { font-weight:700; font-size:.88rem; }
+.ta-r { font-size:.74rem; color:var(--text2); margin-top:1px; }
+
+.trust-strip {
+  display:flex; justify-content:center; flex-wrap:wrap; gap:48px;
+  padding:32px 40px; margin-top:48px;
+  background:var(--surface); border:1px solid var(--border2); border-radius:var(--r2);
+}
+.ts-item { text-align:center; }
+.ts-n { font-family:'Manrope',sans-serif; font-size:1.8rem; font-weight:800; color:var(--cyan-l); }
+.ts-l { font-size:.78rem; color:var(--text2); margin-top:2px; }
+
+/* ════════════════════════════════════════════════════
+   §8 TRANSFORMATION
+════════════════════════════════════════════════════ */
+#transform { background:var(--bg2); }
+.tx-grid { display:grid; grid-template-columns:1fr auto 1fr; gap:20px; align-items:center; margin-top:56px; }
+.tx-card { background:var(--surface); border:1px solid var(--border2); border-radius:var(--r2); padding:30px 26px; }
+.tx-card.bef { border-color:rgba(239,68,68,.2); }
+.tx-card.aft { border-color:rgba(16,185,129,.2); }
+.tx-head {
+  font-family:'Manrope',sans-serif; font-weight:800; font-size:.88rem;
+  text-transform:uppercase; letter-spacing:.08em;
+  padding-bottom:14px; margin-bottom:16px;
+  border-bottom:1px solid var(--border2);
+}
+.tx-card.bef .tx-head { color:var(--red); }
+.tx-card.aft .tx-head { color:var(--green); }
+.tx-item { display:flex; align-items:center; gap:10px; padding:10px 0; font-size:.88rem; border-bottom:1px solid rgba(255,255,255,.04); }
+.tx-item:last-child { border-bottom:none; }
+.tx-dot { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.bef .tx-dot { background:var(--red); }
+.aft .tx-dot { background:var(--green); }
+.tx-arrow { font-size:2rem; text-align:center; color:var(--blue-l); filter:drop-shadow(0 0 10px var(--blue-l)); }
+
+/* ════════════════════════════════════════════════════
+   §9 PRICING
+════════════════════════════════════════════════════ */
+#pricing { background:var(--bg); }
+.price-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:42px; align-items:stretch; }
+.price-card {
+  background:rgba(7,11,24,.9); border:1px solid var(--border2);
+  border-radius:var(--r3); padding:36px 30px;
+  position:relative; transition:transform .3s, border-color .3s, box-shadow .3s, background .3s;
+}
+.price-card:hover { transform:translateY(-5px); box-shadow:0 0 48px rgba(49,240,138,.15); }
+.price-card.pop {
+  border-color:rgba(20,184,166,.72);
+  background:linear-gradient(180deg,rgba(7,16,35,.98),rgba(7,11,24,.94));
+  box-shadow:0 0 95px rgba(49,240,138,.34), 0 0 44px rgba(20,184,166,.18);
+  transform:scale(1.045);
+  z-index:2;
+}
+.price-card.pop:hover { transform:translateY(-6px) scale(1.055); box-shadow:0 0 115px rgba(49,240,138,.4), 0 0 60px rgba(20,184,166,.24); }
+.pop-badge {
+  position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+  background:linear-gradient(90deg,var(--blue),var(--cyan));
+  color:#fff; font-weight:800; font-size:.72rem; letter-spacing:.1em;
+  text-transform:uppercase; padding:5px 18px; border-radius:99px;
+  white-space:nowrap; font-family:'Manrope',sans-serif;
+}
+.pc-tier { font-size:.75rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; color:var(--text2); margin-bottom:8px; }
+.pc-price {
+  font-family:'Manrope',sans-serif; font-weight:800;
+  font-size:2.8rem; color:var(--cyan-l); line-height:1; margin-bottom:4px;
+}
+.pc-monthly {
+  font-size:.8rem; color:var(--green); font-weight:800;
+  margin:4px 0 5px;
+}
+.pc-price sup { font-size:1.2rem; vertical-align:super; }
+.pc-price sub { font-size:.9rem; font-weight:500; color:var(--text2); vertical-align:baseline; }
+.pc-note { font-size:.8rem; color:var(--text2); margin-bottom:24px; min-height:20px; }
+.pc-sep { height:1px; background:var(--border2); margin-bottom:22px; }
+.pc-feats { display:flex; flex-direction:column; gap:10px; margin-bottom:24px; }
+.pf { display:flex; align-items:center; gap:10px; font-size:.875rem; }
+.pf-c {
+  width:20px;height:20px;border-radius:6px;flex-shrink:0;
+  background:rgba(16,185,129,.14);border:1px solid rgba(16,185,129,.28);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.65rem;color:var(--green);
+}
+.payment-strip {
+  display:flex; justify-content:center; align-items:center; gap:12px; flex-wrap:wrap;
+  margin:24px auto 0; color:var(--text2); font-size:.84rem;
+}
+.pay-chip {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:7px 12px; border-radius:99px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border2);
+  color:var(--text);
+  font-weight:700;
+}
+.pay-chip::before { content:'✓'; color:var(--green); font-weight:800; }
+.pay-btn { width:100%; justify-content:center; }
+.pay-btn .pay-arrow { transition:transform .18s; }
+.pay-btn:hover .pay-arrow { transform:translateX(3px); }
+.qr-pay-btn {
+  display:block; width:100%; margin-top:12px;
+  padding:0; border:0; background:none; box-shadow:none;
+  color:var(--text2); font-family:'Inter',sans-serif;
+  font-size:.78rem; font-weight:700; text-align:center;
+  cursor:pointer; transition:color .2s;
+}
+.qr-pay-btn:hover { color:var(--cyan-l); transform:none; }
+.plan-proof {
+  margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,.055);
+  color:var(--text2); font-size:.78rem; line-height:1.45; text-align:center;
+}
+.plan-microcopy {
+  display:flex; flex-wrap:wrap; justify-content:center; gap:8px;
+  margin-top:12px;
+}
+.plan-microcopy span {
+  display:inline-flex; align-items:center; gap:4px;
+  color:var(--text2); font-size:.72rem; font-weight:700;
+}
+.pricing-trust-row {
+  display:flex; justify-content:center; gap:12px; flex-wrap:wrap;
+  margin-top:42px; color:var(--text2); font-size:.85rem;
+}
+.pricing-trust-row span {
+  padding:8px 13px; border-radius:99px;
+  background:rgba(255,255,255,.035); border:1px solid var(--border2);
+}
+
+/* Free trial strip */
+.trial-strip {
+  max-width:880px; margin:42px auto 0;
+  display:flex; align-items:center; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  padding:18px 24px; border-radius:var(--r2);
+  background:linear-gradient(135deg,rgba(16,185,129,.13),rgba(20,184,166,.1));
+  border:1px solid rgba(16,185,129,.3);
+  box-shadow:0 0 70px rgba(16,185,129,.12), 0 0 90px rgba(20,184,166,.08);
+}
+.trial-strip strong {
+  font-family:'Manrope',sans-serif; font-size:1.2rem;
+  color:var(--text);
+}
+.trial-strip span { color:var(--text2); font-size:.92rem; font-weight:700; }
+
+/* Brochure CTA */
+#brochure { background:var(--bg2); position:relative; overflow:hidden; }
+.brochure-grid {
+  display:grid; grid-template-columns:.92fr 1.08fr; gap:56px; align-items:center;
+}
+.brochure-card {
+  background:rgba(7,11,24,.92); border:1px solid var(--border);
+  border-radius:var(--r3); padding:34px;
+  box-shadow:0 0 70px rgba(49,240,138,.12);
+}
+.brochure-card .sp { margin-bottom:28px; }
+.brochure-actions { display:flex; flex-wrap:wrap; gap:12px; }
+.brochure-preview {
+  min-height:410px;
+  background:rgba(7,11,24,.9); border:1px solid var(--border2);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 24px 70px rgba(0,0,0,.4);
+}
+.brochure-preview iframe { width:100%; height:410px; border:0; display:block; background:#fff; }
+.brochure-fallback {
+  display:none; padding:22px; color:var(--text2); font-size:.88rem;
+}
+
+/* ════════════════════════════════════════════════════
+   §10 FAQ
+════════════════════════════════════════════════════ */
+#faq { background:var(--bg2); }
+.faq-list { max-width:720px; margin:0 auto; margin-top:48px; display:flex; flex-direction:column; gap:10px; }
+.faq-item {
+  background:var(--surface); border:1px solid var(--border2);
+  border-radius:14px; overflow:hidden;
+  transition:border-color .3s;
+}
+.faq-item.open { border-color:var(--border); }
+.faq-q {
+  padding:18px 22px; display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; font-weight:700; font-size:.95rem; gap:16px;
+  -webkit-user-select:none; user-select:none;
+}
+.faq-q:hover { background:var(--surface2); }
+.faq-chevron {
+  width:24px;height:24px;border-radius:6px;flex-shrink:0;
+  background:rgba(49,240,138,.12);border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.75rem;color:var(--blue-l);
+  transition:transform .3s, background .3s;
+}
+.faq-item.open .faq-chevron { transform:rotate(180deg); background:rgba(49,240,138,.2); }
+.faq-a {
+  max-height:0; overflow:hidden;
+  transition:max-height .4s cubic-bezier(.4,0,.2,1), padding .4s;
+  font-size:.9rem; color:var(--text2); line-height:1.7;
+}
+.faq-item.open .faq-a { max-height:400px; padding:0 22px 18px; }
+
+/* ════════════════════════════════════════════════════
+   §11 FINAL CTA
+════════════════════════════════════════════════════ */
+#cta { background:var(--bg); position:relative; overflow:hidden; }
+.cta-bg {
+  position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(ellipse 80% 60% at 50% 50%, rgba(49,240,138,.14), transparent 70%);
+}
+.cta-inner { position:relative; z-index:1; text-align:center; max-width:680px; margin:0 auto; }
+.cta-inner h2 { font-size:3.4rem; font-weight:800; margin-bottom:18px; }
+.cta-inner p { color:var(--text2); font-size:1.05rem; margin-bottom:36px; }
+.cta-inner .label { margin:0 auto 20px; }
+.cta-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:22px; }
+.cta-btns .btn-p { font-size:1.05rem; padding:15px 34px; }
+.cta-dm { font-size:.88rem; color:var(--text2); }
+.cta-dm strong { color:var(--cyan-l); }
+.cta-contact {
+  display:inline-flex; align-items:center; gap:8px;
+  margin-top:18px; padding:10px 24px; border-radius:99px;
+  background:rgba(37,211,102,.08); border:1px solid rgba(37,211,102,.22);
+  color:#25d366; font-size:.88rem; font-weight:600;
+  transition:background .2s;
+}
+.cta-contact:hover { background:rgba(37,211,102,.16); }
+
+/* ════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════ */
+footer {
+  background:var(--bg2);
+  border-top:1px solid var(--border2);
+  padding:40px 28px 28px;
+}
+.footer-top {
+  max-width:1140px; margin:0 auto;
+  display:flex; justify-content:space-between; align-items:flex-start;
+  gap:32px; flex-wrap:wrap; margin-bottom:32px;
+}
+.footer-brand p { font-size:.85rem; color:var(--text2); margin-top:8px; max-width:240px; }
+.footer-links { display:flex; flex-direction:column; gap:8px; }
+.footer-links h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); font-weight:700; margin-bottom:6px; }
+.footer-links a { font-size:.85rem; color:var(--text2); transition:color .2s; }
+.footer-links a:hover { color:var(--text); }
+.footer-contact { display:flex; flex-direction:column; gap:10px; }
+.footer-contact h4 { font-size:.78rem; text-transform:uppercase; letter-spacing:.08em; color:var(--text3); font-weight:700; margin-bottom:6px; }
+.wa-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 20px; border-radius:99px;
+  background:rgba(37,211,102,.1); border:1px solid rgba(37,211,102,.25);
+  color:#25d366; font-size:.875rem; font-weight:700;
+  transition:background .2s; width:fit-content;
+}
+.wa-btn:hover { background:rgba(37,211,102,.18); }
+.email-btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:10px 20px; border-radius:99px;
+  background:rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.24);
+  color:var(--cyan-l); font-size:.875rem; font-weight:700;
+  transition:background .2s; width:fit-content;
+}
+.email-btn:hover { background:rgba(20,184,166,.15); }
+.footer-bottom {
+  max-width:1140px; margin:0 auto;
+  padding-top:24px; border-top:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
+}
+.footer-bottom p { font-size:.78rem; color:var(--text3); }
+.footer-bottom-links { display:flex; gap:20px; }
+.footer-bottom-links a { font-size:.78rem; color:var(--text3); transition:color .2s; }
+.footer-bottom-links a:hover { color:var(--text2); }
+
+/* ════════════════════════════════════════════════════
+   STICKY BAR
+════════════════════════════════════════════════════ */
+.sticky {
+  position:fixed; bottom:0; left:0; right:0; z-index:400;
+  padding:12px 28px;
+  background:rgba(4,6,15,.92); backdrop-filter:blur(20px);
+  border-top:1px solid var(--border2);
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  transform:translateY(100%); transition:transform .4s cubic-bezier(.4,0,.2,1);
+}
+.sticky.show { transform:translateY(0); }
+.sticky-l p { font-size:.88rem; color:var(--text2); }
+.sticky-l strong { color:var(--text); }
+.sticky-r { display:flex; gap:10px; align-items:center; flex-shrink:0; }
+
+/* ── FLOATING ACTION STACK ── */
+.floating-actions {
+  position:fixed; bottom:92px; right:24px; z-index:450;
+  display:flex; flex-direction:column; gap:10px; align-items:flex-end;
+}
+.quick-toggle {
+  display:flex; align-items:center; gap:9px;
+  min-height:48px; padding:11px 16px; border-radius:99px;
+  border:1px solid rgba(110,231,183,.28);
+  background:linear-gradient(135deg,rgba(49,240,138,.95),rgba(20,184,166,.86));
+  color:#fff; box-shadow:0 16px 38px rgba(49,240,138,.32);
+  font-family:'Manrope',sans-serif; font-size:.84rem; font-weight:800;
+  cursor:pointer; transition:transform .2s, box-shadow .2s;
+}
+.quick-toggle:hover { transform:translateY(-2px); box-shadow:0 18px 46px rgba(20,184,166,.34); }
+.quick-toggle i {
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.16); font-style:normal;
+}
+.quick-toggle .qt-arrow { transition:transform .2s; }
+.floating-actions.open .qt-arrow,
+.floating-actions:hover .qt-arrow,
+.floating-actions:focus-within .qt-arrow { transform:rotate(180deg); }
+.float-action-panel {
+  display:flex; flex-direction:column; gap:10px; align-items:flex-end;
+  opacity:0; transform:translateY(12px) scale(.96);
+  pointer-events:none; max-height:0; overflow:hidden;
+  transition:opacity .2s, transform .2s, max-height .25s;
+}
+.floating-actions.open .float-action-panel,
+.floating-actions:hover .float-action-panel,
+.floating-actions:focus-within .float-action-panel {
+  opacity:1; transform:translateY(0) scale(1);
+  pointer-events:auto; max-height:190px;
+}
+.float-action {
+  display:flex; align-items:center; gap:9px;
+  min-height:46px; padding:10px 15px; border-radius:99px;
+  border:1px solid var(--border2);
+  background:rgba(4,6,15,.92); color:var(--text);
+  box-shadow:0 12px 30px rgba(0,0,0,.35);
+  backdrop-filter:blur(18px);
+  font-family:'Manrope',sans-serif; font-size:.82rem; font-weight:800;
+  text-decoration:none;
+  cursor:pointer; transition:transform .2s, border-color .2s, background .2s;
+}
+.float-action:hover { transform:translateY(-2px); border-color:var(--border); background:rgba(7,11,24,.96); }
+.float-action.wa { color:#25d366; border-color:rgba(37,211,102,.24); }
+.float-action.demo { color:var(--cyan-l); border-color:rgba(20,184,166,.24); }
+.float-action.pdf { color:#fbbf24; border-color:rgba(251,191,36,.24); }
+.float-action i {
+  width:26px; height:26px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  background:rgba(255,255,255,.055); font-style:normal;
+}
+
+/* ── VIDEO MODAL ── */
+.demo-modal {
+  position:fixed; inset:0; z-index:900;
+  display:none; align-items:center; justify-content:center;
+  padding:24px;
+}
+.demo-modal.open { display:flex; }
+.demo-backdrop {
+  position:absolute; inset:0; background:rgba(0,0,0,.78);
+  backdrop-filter:blur(12px);
+}
+.demo-dialog {
+  position:relative; z-index:1; width:min(940px,100%);
+  background:rgba(7,11,24,.98); border:1px solid var(--border);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 32px 120px rgba(0,0,0,.7), 0 0 80px var(--glow);
+}
+.demo-modal-head {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:16px 20px; border-bottom:1px solid var(--border2);
+}
+.demo-modal-head strong { font-family:'Manrope',sans-serif; font-size:1rem; }
+.demo-close {
+  width:34px; height:34px; border-radius:9px;
+  background:var(--surface); border:1px solid var(--border2);
+  color:var(--text); cursor:pointer; font-size:1.1rem;
+}
+.demo-frame { position:relative; aspect-ratio:16/9; background:#000; }
+.demo-frame iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.demo-dialog .video-caption a {
+  color:var(--cyan-l); font-weight:800; text-decoration:underline;
+  text-underline-offset:3px;
+}
+
+/* ── PAYMENT MODAL ── */
+.pay-modal {
+  position:fixed; inset:0; z-index:910;
+  display:none; align-items:center; justify-content:center;
+  padding:24px;
+}
+.pay-modal.open { display:flex; }
+.pay-backdrop {
+  position:absolute; inset:0; background:rgba(0,0,0,.78);
+  backdrop-filter:blur(12px);
+}
+.pay-dialog {
+  position:relative; z-index:1; width:min(520px,100%);
+  background:rgba(7,11,24,.98); border:1px solid var(--border);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 32px 120px rgba(0,0,0,.7), 0 0 80px rgba(20,184,166,.18);
+}
+.pay-modal-head {
+  display:flex; align-items:center; justify-content:space-between; gap:16px;
+  padding:16px 20px; border-bottom:1px solid var(--border2);
+}
+.pay-modal-head strong { font-family:'Manrope',sans-serif; font-size:1rem; }
+.pay-close {
+  width:34px; height:34px; border-radius:9px;
+  background:var(--surface); border:1px solid var(--border2);
+  color:var(--text); cursor:pointer; font-size:1.1rem;
+}
+.pay-body { padding:24px; text-align:center; }
+.pay-plan-name { font-family:'Manrope',sans-serif; font-size:1.35rem; font-weight:800; margin-bottom:4px; }
+.pay-plan-price { color:var(--cyan-l); font-weight:800; margin-bottom:18px; }
+.pay-qr-wrap {
+  display:inline-flex; padding:14px; border-radius:18px;
+  background:#fff; box-shadow:0 16px 50px rgba(0,0,0,.32);
+  margin-bottom:18px;
+}
+.pay-qr-wrap img { width:220px; height:220px; object-fit:contain; }
+.pay-help { color:var(--text2); font-size:.88rem; margin-bottom:18px; }
+.pay-actions { display:flex; flex-direction:column; gap:10px; }
+.pay-actions .btn { justify-content:center; }
+.pay-safe {
+  display:flex; justify-content:center; gap:8px; flex-wrap:wrap;
+  color:var(--text2); font-size:.78rem; margin-top:16px;
+}
+
+/* ── AUTH / ONBOARDING MODAL ── */
+.auth-modal {
+  position:fixed; inset:0; z-index:930;
+  display:none; align-items:center; justify-content:center;
+  padding:24px;
+}
+.auth-modal.open { display:flex; }
+.auth-backdrop {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,.78);
+  backdrop-filter:blur(14px);
+}
+.auth-dialog {
+  position:relative; z-index:1; width:min(470px,100%);
+  background:linear-gradient(180deg,rgba(7,12,26,.98),rgba(5,8,18,.98));
+  border:1px solid rgba(110,231,183,.22);
+  border-radius:var(--r3); overflow:hidden;
+  box-shadow:0 34px 120px rgba(0,0,0,.72), 0 0 80px rgba(49,240,138,.25);
+}
+.auth-close {
+  position:absolute; top:14px; right:14px;
+  width:34px; height:34px; border-radius:9px;
+  background:var(--surface); border:1px solid var(--border2);
+  color:var(--text); cursor:pointer; font-size:1.1rem; z-index:2;
+}
+.auth-body { padding:34px 30px 30px; }
+.auth-logo {
+  width:58px; height:58px; border-radius:18px;
+  display:flex; align-items:center; justify-content:center;
+  margin-bottom:18px;
+  background:rgba(236,253,245,.04);
+  border:1px solid rgba(110,231,183,.18);
+  box-shadow:0 0 38px rgba(49,240,138,.16);
+  overflow:hidden;
+}
+.auth-logo img { width:100%; height:100%; object-fit:cover; }
+.auth-title { font-size:2.1rem; font-weight:800; margin-bottom:8px; }
+.auth-sub { color:var(--text2); font-size:.95rem; margin-bottom:18px; }
+.auth-plan {
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:12px 14px; border-radius:14px;
+  background:rgba(49,240,138,.08); border:1px solid rgba(110,231,183,.18);
+  margin-bottom:18px;
+}
+.auth-plan strong { font-size:.9rem; }
+.auth-plan span { color:var(--green); font-size:.82rem; font-weight:800; }
+.auth-tabs {
+  display:grid; grid-template-columns:1fr 1fr; gap:8px;
+  padding:4px; border-radius:13px;
+  background:rgba(255,255,255,.04); border:1px solid var(--border2);
+  margin-bottom:18px;
+}
+.auth-tab {
+  padding:10px 12px; border-radius:10px; border:0;
+  background:transparent; color:var(--text2);
+  font-family:'Manrope',sans-serif; font-weight:800;
+  cursor:pointer;
+}
+.auth-tab.active { background:rgba(49,240,138,.18); color:var(--text); box-shadow:0 0 22px rgba(49,240,138,.12); }
+.auth-panel { display:none; }
+.auth-panel.active { display:block; }
+.auth-google {
+  width:100%; justify-content:center; margin-bottom:14px;
+  background:#fff; color:#111827; border:1px solid rgba(255,255,255,.12);
+}
+.auth-divider {
+  display:flex; align-items:center; gap:12px;
+  color:var(--text3); font-size:.76rem; font-weight:800;
+  text-transform:uppercase; letter-spacing:.08em; margin:14px 0;
+}
+.auth-divider::before,.auth-divider::after { content:''; height:1px; flex:1; background:var(--border2); }
+.auth-form { display:flex; flex-direction:column; gap:12px; }
+.auth-field { text-align:left; }
+.auth-field label {
+  display:block; color:var(--text2); font-size:.78rem; font-weight:800; margin-bottom:6px;
+}
+.auth-field input {
+  width:100%; padding:13px 14px; border-radius:12px;
+  border:1px solid var(--border2); background:rgba(255,255,255,.045);
+  color:var(--text); font:inherit; outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.auth-field input:focus { border-color:var(--blue-l); box-shadow:0 0 0 3px rgba(49,240,138,.16); }
+.auth-submit { width:100%; justify-content:center; margin-top:4px; }
+.auth-note { color:var(--text2); font-size:.8rem; line-height:1.55; margin-top:14px; }
+.auth-note strong { color:var(--cyan-l); }
+.auth-link {
+  background:none; border:0; color:var(--cyan-l);
+  font:inherit; font-weight:800; cursor:pointer; padding:0;
+}
+.auth-login-card {
+  padding:16px; border-radius:16px;
+  background:rgba(255,255,255,.035); border:1px solid var(--border2);
+  margin-bottom:14px;
+}
+.auth-login-card p { color:var(--text2); font-size:.88rem; margin:0 0 12px; }
+.auth-status {
+  min-height:22px; margin-top:12px;
+  color:var(--text2); font-size:.84rem; line-height:1.5;
+}
+.auth-status.error { color:#fca5a5; }
+.auth-status.success { color:var(--green); }
+.auth-success {
+  display:none; text-align:center; padding:38px 30px 34px;
+}
+.auth-success.active { display:block; }
+.success-mark {
+  width:64px; height:64px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  margin:0 auto 18px;
+  background:rgba(16,185,129,.13); border:1px solid rgba(16,185,129,.32);
+  color:var(--green); font-size:1.8rem;
+  box-shadow:0 0 50px rgba(16,185,129,.18);
+  animation:successpop .45s cubic-bezier(.2,1.4,.4,1);
+}
+@keyframes successpop { from{transform:scale(.72);opacity:.3} to{transform:scale(1);opacity:1} }
+.auth-success h3 { font-size:1.45rem; margin-bottom:8px; }
+.auth-success p { color:var(--text2); font-size:.94rem; }
+
+/* ════════════════════════════════════════════════════
+   PRE-DEPLOY POLISH PASS
+════════════════════════════════════════════════════ */
+.skip-link {
+  position:fixed; top:10px; left:10px; z-index:1200;
+  transform:translateY(-140%);
+  padding:10px 14px; border-radius:8px;
+  background:#fff; color:#07111f; font-weight:800;
+  transition:transform .18s;
+}
+.skip-link:focus { transform:translateY(0); }
+:focus-visible {
+  outline:2px solid var(--amber);
+  outline-offset:3px;
+}
+body {
+  background:
+    radial-gradient(circle at 18% 8%,rgba(49,240,138,.09),transparent 28%),
+    radial-gradient(circle at 82% 0%,rgba(20,184,166,.07),transparent 24%),
+    linear-gradient(180deg,#070a08 0%,#0d120f 48%,#060806 100%);
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:antialiased;
+}
+body::before {
+  content:''; position:fixed; inset:0; pointer-events:none; z-index:-1;
+  background:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size:42px 42px;
+  mask-image:linear-gradient(to bottom,rgba(0,0,0,.6),transparent 76%);
+}
+.wrap { max-width:1180px; }
+.section { padding:104px 0; border-top:1px solid rgba(255,255,255,.035); }
+nav {
+  background:rgba(7,10,8,.78);
+  box-shadow:0 1px 0 rgba(255,255,255,.04), 0 18px 50px rgba(0,0,0,.22);
+}
+.logo {
+  display:inline-flex; align-items:center; gap:10px;
+  -webkit-text-fill-color:initial; color:var(--text);
+  background:none;
+  font-weight:800;
+}
+.logo::before { content:none; display:none; }
+.logo img {
+  width:34px; height:34px; border-radius:10px;
+  object-fit:cover; flex-shrink:0;
+  box-shadow:0 10px 34px rgba(49,240,138,.18);
+}
+.logo span { color:var(--text); letter-spacing:0; }
+.footer-brand .logo::before { display:none; }
+.nav-mid a { border:1px solid transparent; }
+.nav-mid a:hover { border-color:var(--border2); }
+.btn, .nav-login, .nav-brochure, .nav-cta {
+  min-height:44px;
+  align-items:center; justify-content:center;
+  white-space:nowrap;
+}
+.btn {
+  border-radius:10px;
+  letter-spacing:0;
+}
+.btn-p {
+  background:linear-gradient(135deg,#059669 0%,#12c978 54%,#14b8a6 100%);
+  box-shadow:0 16px 34px rgba(49,240,138,.2), inset 0 1px 0 rgba(255,255,255,.22);
+}
+.btn-g {
+  background:rgba(255,255,255,.055);
+  border-color:rgba(255,255,255,.11);
+}
+.btn-subtle {
+  background:rgba(251,191,36,.08);
+  border-color:rgba(251,191,36,.22);
+  color:#fde68a;
+}
+.btn-subtle:hover {
+  background:rgba(251,191,36,.14);
+  border-color:rgba(251,191,36,.38);
+}
+.label {
+  background:rgba(20,184,166,.08);
+  border-color:rgba(20,184,166,.24);
+  color:#a7f3d0;
+}
+.sh { font-size:3rem; max-width:820px; }
+.center .sh { margin-left:auto; margin-right:auto; }
+.sp { color:#aab7ca; line-height:1.75; }
+.cta-inner h2 { font-size:3.25rem; }
+.auth-title { font-size:2.05rem; }
+#hero {
+  min-height:92vh;
+  background:
+    radial-gradient(circle at 72% 34%,rgba(49,240,138,.1),transparent 28%),
+    linear-gradient(135deg,rgba(16,185,129,.11),transparent 34%),
+    linear-gradient(180deg,#070a08 0%,#0d120f 100%);
+}
+.hero-orb { display:none; }
+.hero h1 { font-size:4rem; max-width:650px; }
+.hero h1 em, .sh em, .cta-inner h2 em {
+  background:linear-gradient(90deg,#d8ffea 0%,#6ee7b7 44%,#14b8a6 100%) !important;
+  -webkit-background-clip:text !important;
+  -webkit-text-fill-color:transparent !important;
+}
+.hero p { color:#b4c0d2; line-height:1.78; max-width:570px; }
+.hero-pill {
+  background:rgba(16,185,129,.08);
+  border-color:rgba(52,211,153,.28);
+  color:#bbf7d0;
+}
+.hero-trust {
+  padding:14px 16px;
+  width:fit-content;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;
+  background:rgba(255,255,255,.035);
+}
+.dash,.video-shell,.sol-visual,.flow,.ana-visual,.brochure-card,.brochure-preview,.price-card,.testi-card,.tx-card,.pain-card,.feat-card {
+  border-radius:8px;
+  box-shadow:0 24px 70px rgba(0,0,0,.35);
+}
+.dash,.sol-visual,.ana-visual {
+  background:linear-gradient(180deg,rgba(10,16,32,.94),rgba(5,8,18,.96));
+}
+.m-delta.muted { color:var(--text2); }
+.fn.ai-step { border-color:rgba(49,240,138,.35); }
+.fn.payment-step { border-color:rgba(16,185,129,.3); }
+.fn.reminder-step { border-color:rgba(37,211,102,.3); }
+.fn.analytics-step { border-color:rgba(20,184,166,.3); }
+.bar.h40 { height:40px; }
+.bar.h45 { height:45px; }
+.bar.h55 { height:55px; }
+.bar.h60 { height:60px; }
+.bar.h70 { height:70px; }
+.bar.h90 { height:90px; }
+.pc-note.save { color:var(--green); }
+.footer-logo { font-size:1.2rem; margin-bottom:10px; }
+.footer-pill { display:inline-flex; margin-top:4px; width:fit-content; }
+.metric,.dash-chat,.sol-tag,.demo-point,.feat-card,.al-item,.fn,.as-item,.testi-card,.tx-card,.faq-item {
+  background:rgba(255,255,255,.045);
+}
+.pain-card {
+  border-color:rgba(251,113,133,.2);
+  background:linear-gradient(180deg,rgba(127,29,29,.12),rgba(255,255,255,.035));
+}
+.pain-x,.fi,.al-ic,.fn-ic,.m-icon,.fc-i { filter:saturate(.9); }
+#features,#demo,#analytics,#transform,#faq,#brochure {
+  background:linear-gradient(180deg,#0a0f0c 0%,#0d120f 100%);
+}
+#auto,#pricing,#testimonials,#cta {
+  background:linear-gradient(180deg,#070a08 0%,#0a0f0c 100%);
+}
+.feat-card:hover,.testi-card:hover,.price-card:hover,.al-item:hover,.sol-tag:hover {
+  border-color:rgba(34,211,238,.28);
+}
+.price-grid { gap:22px; }
+.price-card {
+  padding:34px 28px;
+  background:linear-gradient(180deg,rgba(10,16,32,.96),rgba(5,8,18,.98));
+}
+.price-card.pop {
+  border-color:rgba(52,211,153,.72);
+  background:linear-gradient(180deg,rgba(8,28,31,.98),rgba(5,12,20,.98));
+  box-shadow:0 0 0 1px rgba(52,211,153,.18), 0 30px 90px rgba(16,185,129,.22);
+}
+.pop-badge {
+  background:linear-gradient(90deg,#047857,#14b8a6);
+  box-shadow:0 12px 32px rgba(16,185,129,.2);
+}
+.pc-price { color:#67e8f9; }
+.pc-monthly { color:#86efac; }
+.trial-strip {
+  background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(251,191,36,.08));
+  border-color:rgba(52,211,153,.38);
+}
+.pricing-trust-row span,.pay-chip,.demo-badge {
+  border-color:rgba(255,255,255,.1);
+  background:rgba(255,255,255,.045);
+}
+.auth-dialog,.pay-dialog,.demo-dialog {
+  border-radius:12px;
+}
+.auth-google::before {
+  content:'G';
+  width:22px; height:22px; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  background:#111827; color:#fff; font-family:'Manrope',sans-serif;
+}
+.float-action i { font-size:.68rem; font-weight:900; }
+.footer-top {
+  display:grid;
+  grid-template-columns:1.4fr repeat(3,minmax(150px,1fr));
+}
+
+/* ════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════ */
+@media(max-width:1000px){
+  .hero-grid,.sol-inner,.demo-grid,.auto-grid,.analytics-inner,.brochure-grid { grid-template-columns:1fr; gap:48px; }
+  .hero-visual,.sol-visual,.ana-visual { display:none; }
+  .pain-grid,.feat-grid,.testi-grid { grid-template-columns:1fr 1fr; }
+  .price-grid { grid-template-columns:1fr 1fr; }
+  .price-card.pop { transform:none; }
+  .price-card.pop:hover { transform:translateY(-5px); }
+  .nav-mid { display:none; }
+  .ham { display:flex; }
+  .nav-cta,.nav-brochure { display:none; }
+  .hero h1 { font-size:3.2rem; }
+  .sh { font-size:2.45rem; }
+  .cta-inner h2 { font-size:2.65rem; }
+  .footer-top { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:1140px){
+  .nav-brochure { display:none; }
+  .nav-mid a { padding:7px 10px; }
+}
+@media(max-width:640px){
+  .pain-grid,.feat-grid,.testi-grid,.price-grid { grid-template-columns:1fr; }
+  .section { padding:80px 0; }
+  .tx-grid { grid-template-columns:1fr; }
+  .tx-arrow { transform:rotate(90deg); }
+  .sol-inner { grid-template-columns:1fr; }
+  .sticky-l { display:none; }
+  .trust-strip { gap:28px; }
+  .sticky { padding:10px 16px; }
+  .sticky-r { width:100%; justify-content:center; flex-wrap:wrap; }
+  .floating-actions { right:14px; bottom:18px; }
+  .sticky.show + .floating-actions { bottom:116px; }
+  .quick-toggle { width:52px; min-height:52px; padding:0; border-radius:50%; font-size:.78rem; }
+  .quick-toggle > span { display:none; }
+  .quick-toggle i { width:34px; height:34px; }
+  .float-action { min-height:42px; padding:9px 12px; font-size:.76rem; }
+  .brochure-card { padding:28px 22px; }
+  .brochure-preview, .brochure-preview iframe { min-height:320px; height:320px; }
+  .pay-body { padding:22px 18px; }
+  .pay-qr-wrap img { width:190px; height:190px; }
+  .trial-strip { justify-content:center; text-align:center; }
+  .auth-body { padding:30px 20px 24px; }
+  .auth-modal { padding:14px; }
+  .wrap { padding:0 20px; }
+  #hero { min-height:auto; padding:110px 0 82px; }
+  .hero h1 { font-size:2.45rem; }
+  .sh { font-size:2.05rem; }
+  .cta-inner h2 { font-size:2.15rem; }
+  .auth-title { font-size:1.75rem; }
+  .hero p,.sp { font-size:.98rem; }
+  .hero-btns .btn,.cta-btns .btn,.brochure-actions .btn { width:100%; }
+  .hero-trust { width:100%; }
+  .price-card { padding:30px 22px; }
+  .footer-top { grid-template-columns:1fr; }
+  .footer-bottom { align-items:flex-start; flex-direction:column; }
+}
+`;
+const homepageMarkup = String.raw`<a class="skip-link" href="#main-content">Skip to content</a>
+
+<!-- ════════════════════════════════════════════════
+     NAV
+════════════════════════════════════════════════ -->
+<nav aria-label="Primary navigation">
+  <div class="nav-inner">
+    <a class="logo" href="#hero" aria-label="GymAssist AI home">
+      <img src="gymassistai-mark-web.png" alt="" width="34" height="34"/>
+      <span>GymAssist AI</span>
+    </a>
+    <div class="nav-mid">
+      <a href="#pain">Problem</a>
+      <a href="#features">Features</a>
+      <a href="#demo">Demo</a>
+      <a href="#auto">Automation</a>
+      <a href="#testimonials">Reviews</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <div class="nav-right">
+      <!-- ★ REPLACE href WITH YOUR LOGIN URL ★ -->
+      <button class="nav-login" type="button" onclick="redirectExistingUser()">Log In</button>
+      <a href="gymassistbrochure.pdf" class="nav-brochure" download>Download Brochure</a>
+      <button class="nav-cta btn" type="button" onclick="beginTrialFlow()">Start Free Trial</button>
+    </div>
+    <button class="ham" type="button" onclick="openM()" aria-label="Open menu" aria-controls="mobMenu" aria-expanded="false"><span></span><span></span><span></span></button>
+  </div>
+</nav>
+
+<!-- Mobile Menu -->
+<nav class="mob-menu" id="mobMenu" aria-label="Mobile navigation">
+  <button class="mob-x" onclick="closeM()">✕</button>
+  <a href="#pain" onclick="closeM()">Problem</a>
+  <a href="#features" onclick="closeM()">Features</a>
+  <a href="#demo" onclick="closeM()">Demo</a>
+  <a href="#pricing" onclick="closeM()">Pricing</a>
+  <a href="#faq" onclick="closeM()">FAQ</a>
+  <a href="gymassistbrochure.pdf" download onclick="closeM()">Download Brochure</a>
+  <!-- ★ REPLACE href WITH YOUR LOGIN URL ★ -->
+  <button class="btn btn-g btn-sm" type="button" onclick="closeM(); redirectExistingUser();">Log In</button>
+  <button class="btn btn-p btn-sm" type="button" onclick="closeM(); beginTrialFlow();">Start Free Trial</button>
+</nav>
+
+<main id="main-content">
+
+<!-- ════════════════════════════════════════════════
+     §1 HERO
+════════════════════════════════════════════════ -->
+<section id="hero">
+  <div class="hero-orb o1"></div>
+  <div class="hero-orb o2"></div>
+  <div class="hero-orb o3"></div>
+  <div class="wrap">
+    <div class="hero-grid">
+      <div class="fade-l">
+        <div class="hero-pill"><div class="hp-dot"></div>AI Gym Management for India - 15-Day FREE Trial</div>
+        <h1>AI gym management software that automates your <em>payments and renewals.</em></h1>
+        <p>GymAssist AI helps gym owners track members, collect dues, send WhatsApp reminders, and view revenue analytics from one clean dashboard.</p>
+        <div class="hero-btns">
+          <button class="btn btn-p" type="button" onclick="beginTrialFlow()">Start 15-Day FREE Trial</button>
+          <button class="btn btn-g" type="button" onclick="openDemoModal()">Watch Live Demo</button>
+          <a href="gymassistbrochure.pdf" class="btn btn-subtle" download>Download Brochure</a>
+        </div>
+        <div class="hero-trust">
+          <div class="ht-avatars">
+            <span>RK</span><span>PM</span><span>AS</span><span>VJ</span>
+          </div>
+          <div class="ht-txt">
+            <div class="ht-stars">★★★★★</div>
+            <div>Built for <strong>growing gym owners</strong> across India</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-visual fade-r">
+        <img class="hero-brand-mark" src="gymassistai-mark-web.png" alt="" aria-hidden="true"/>
+        <div class="dash">
+          <div class="dash-bar">
+            <div class="db-dot dbd1"></div>
+            <div class="db-dot dbd2"></div>
+            <div class="db-dot dbd3"></div>
+            <div class="db-label">GymAssist Dashboard</div>
+          </div>
+          <div class="dash-body">
+            <div class="metric-row">
+              <div class="metric">
+                <div class="m-icon">👥</div>
+                <div class="m-lbl">Members</div>
+                <div class="m-val c">248</div>
+                <div class="m-delta">↑ +12 this month</div>
+              </div>
+              <div class="metric">
+                <div class="m-icon">💰</div>
+                <div class="m-lbl">Revenue</div>
+                <div class="m-val g">₹1.24L</div>
+                <div class="m-delta">↑ +18% vs last</div>
+              </div>
+              <div class="metric">
+                <div class="m-icon">⏰</div>
+                <div class="m-lbl">Renewals Due</div>
+                <div class="m-val r">14</div>
+                <div class="m-delta muted">Auto-alerted ✓</div>
+              </div>
+            </div>
+            <div class="dash-chat">
+              <div class="dc-row">
+                <div class="dc-msg dc-u">Add member Priya, paid ₹1800</div>
+                <div class="dc-msg dc-a">
+                  <div class="dc-lbl">GymAssist AI</div>
+                  ✅ Priya added. ₹1,800 logged. Renewal set for Sep 15.
+                </div>
+                <div class="dc-msg dc-u">Send reminder to Rahul</div>
+                <div class="dc-msg dc-a">
+                  <div class="dc-lbl">GymAssist AI</div>
+                  📲 WhatsApp reminder sent to Rahul — membership expires in 3 days.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fc fc1"><div class="fc-i">📲</div><div class="fc-v">Reminder Sent!</div><div class="fc-s">WhatsApp → Rahul Singh</div></div>
+        <div class="fc fc2"><div class="fc-i">💰</div><div class="fc-v">₹8,200</div><div class="fc-s">Collected today</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §2 PAIN POINTS
+════════════════════════════════════════════════ -->
+<section id="pain" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">The Problem</div>
+      <h2 class="sh">Manual gym operations quietly reduce revenue.</h2>
+      <p class="sp">Payments get missed, renewals get delayed, and owners lose hours to registers, spreadsheets, and follow-up messages.</p>
+    </div>
+    <div class="pain-grid">
+      <div class="pain-card fade">
+        <div class="pain-x">❌</div>
+        <h3>Missed Payments</h3>
+        <p>You're losing money every month without realizing it. Members lapse, dues slip through, and cash flow suffers silently while you stay busy.</p>
+      </div>
+      <div class="pain-card fade">
+        <div class="pain-x">❌</div>
+        <h3>Time Wasted</h3>
+        <p>Hours spent manually sending reminders, updating registers, and chasing members. Time you could invest in coaching, sales, or rest.</p>
+      </div>
+      <div class="pain-card fade">
+        <div class="pain-x">❌</div>
+        <h3>Messy Systems</h3>
+        <p>Spreadsheets + WhatsApp groups = total chaos. No overview, no insight, no control. Just constant firefighting and zero scalability.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §3 SOLUTION / PRODUCT DEMO
+════════════════════════════════════════════════ -->
+<section id="solution" class="section">
+  <div class="sol-ring"></div>
+  <div class="wrap">
+    <div class="sol-inner">
+      <div class="fade-l">
+        <div class="label">The Solution</div>
+        <h2 class="sh">Meet <em>GymAssist AI</em></h2>
+        <p class="sp">A modern AI gym management system for memberships, payments, WhatsApp reminders, renewals, diet plans, and revenue analytics.</p>
+        <div class="sol-tags-wrap">
+          <div class="sol-tag">
+            <div class="st-icon">🤖</div>
+            <div class="st-text"><strong>AI-Powered Assistant</strong><span>Manage everything by just typing a message</span></div>
+          </div>
+          <div class="sol-tag">
+            <div class="st-icon">📲</div>
+            <div class="st-text"><strong>WhatsApp Integration</strong><span>Reminders and alerts sent automatically</span></div>
+          </div>
+          <div class="sol-tag">
+            <div class="st-icon">📊</div>
+            <div class="st-text"><strong>Real-Time Analytics</strong><span>Revenue, renewals, and member insights live</span></div>
+          </div>
+          <div class="sol-tag">
+            <div class="st-icon">⚡</div>
+            <div class="st-text"><strong>Zero Learning Curve</strong><span>No training needed — if you can text, you can use it</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="sol-visual fade-r">
+        <div class="sv-header">
+          <div class="sv-circle">GA</div>
+          <div><div class="sv-name">GymAssist AI</div><div class="sv-sub">● Online — Ready to help</div></div>
+          <div class="sv-dot"></div>
+        </div>
+        <div class="sv-body">
+          <div class="sv-msg sv-u">"Show pending payments"</div>
+          <div class="sv-msg sv-a">📊 <strong>14 pending payments</strong> totalling ₹21,000.<br/>Vikram — ₹2,000 (5 days overdue) · Sunita — ₹1,500 · Rajan — ₹3,000 (due today)</div>
+          <div class="sv-msg sv-u">"Send reminder to all pending"</div>
+          <div class="sv-msg sv-a">📲 Sending WhatsApp reminders to 14 members... Done! All 14 notified. Expected collection: ₹21,000.</div>
+          <div class="sv-msg sv-u">"Add diet plan for Priya — weight loss"</div>
+          <div class="sv-msg sv-a">🥗 AI Diet plan generated for Priya (weight loss goal). 7-day plan with macros attached to her profile.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §3B DEMO VIDEO
+════════════════════════════════════════════════ -->
+<section id="demo" class="section">
+  <div class="wrap">
+    <div class="demo-grid">
+      <div class="fade-l">
+        <div class="video-shell">
+          <div class="video-frame">
+            <button class="video-thumb" type="button" onclick="openDemoModal()" aria-label="Watch GymAssist AI demo video">
+              <span class="video-play"><span>▶</span></span>
+              <span class="video-thumb-text">
+                <strong>Watch the live demo</strong>
+                <span>Opens in a focused player</span>
+              </span>
+            </button>
+          </div>
+          <div class="video-caption">
+            <strong>Live GymAssist AI workflow</strong>
+            <span>Payments, reminders, memberships, analytics</span>
+          </div>
+        </div>
+        <div class="demo-badges">
+          <div class="demo-badge">15-Day FREE Trial</div>
+          <div class="demo-badge">No Credit Card Required</div>
+          <div class="demo-badge">Setup in Minutes</div>
+          <div class="demo-badge">WhatsApp Support Available</div>
+        </div>
+      </div>
+      <div class="demo-copy fade-r">
+        <div class="label">Live Demo</div>
+        <h2 class="sh">See GymAssist AI in Action</h2>
+        <p class="sp">Watch how gym owners manage payments, reminders, memberships, and analytics in seconds.</p>
+        <div class="demo-points">
+          <div class="demo-point">AI-powered reminders</div>
+          <div class="demo-point">Payment tracking</div>
+          <div class="demo-point">WhatsApp automation</div>
+          <div class="demo-point">Membership management</div>
+          <div class="demo-point">Revenue analytics</div>
+        </div>
+        <button class="btn btn-p" type="button" onclick="beginTrialFlow()">Start Free Trial</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §4 FEATURES
+════════════════════════════════════════════════ -->
+<section id="features" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">Features</div>
+      <h2 class="sh">Everything your gym needs to run cleaner.</h2>
+      <p class="sp">A complete gym management platform built for Indian gyms that want fewer missed dues, faster renewals, and better member experiences.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card fade">
+        <div class="fi">👥</div>
+        <h3>Membership Management</h3>
+        <p>Add, update, and track all your members instantly. Full profiles with payment history, attendance, and renewal dates — all in one place.</p>
+      </div>
+      <div class="feat-card fade">
+        <div class="fi">💰</div>
+        <h3>Payment Tracking</h3>
+        <p>Log payments in seconds via chat. Get real-time revenue reports, pending dues, and daily collection summaries — no spreadsheets.</p>
+      </div>
+      <div class="feat-card fade">
+        <div class="fi">📲</div>
+        <h3>Auto Reminders (WhatsApp/SMS)</h3>
+        <p>Automated WhatsApp and SMS reminders for renewals, overdue payments, and custom messages. Set it once, it runs forever.</p>
+      </div>
+      <div class="feat-card fade">
+        <div class="fi">🔔</div>
+        <h3>Renewal Alerts</h3>
+        <p>Never lose a member to a lapsed membership again. Smart alerts 7, 3, and 1 day before expiry — with easy one-click renewal flows.</p>
+      </div>
+      <div class="feat-card fade">
+        <div class="fi">🥗</div>
+        <h3>AI Diet Plans</h3>
+        <p>Generate personalized diet plans for members based on their goals — instantly. A premium value-add that improves retention significantly.</p>
+      </div>
+      <div class="feat-card fade">
+        <div class="fi">📊</div>
+        <h3>Revenue Analytics</h3>
+        <p>Monthly revenue trends, top-paying members, collection rates, and growth insights — all in a clean, real-time analytics dashboard.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §5 AUTOMATION
+════════════════════════════════════════════════ -->
+<section id="auto" class="section">
+  <div class="wrap">
+    <div class="auto-grid">
+      <div class="fade-l">
+        <div class="label">Automation</div>
+        <h2 class="sh">Automate the work that slows your gym down.</h2>
+        <p class="sp">GymAssist handles routine admin so you can focus on coaching, sales, service quality, and member retention.</p>
+        <div class="auto-list">
+          <div class="al-item">
+            <div class="al-ic">🚫</div>
+            <div class="al-txt"><strong>No more chasing payments</strong><span>Automated reminders and follow-ups handle collections without you lifting a finger.</span></div>
+          </div>
+          <div class="al-item">
+            <div class="al-ic">📋</div>
+            <div class="al-txt"><strong>No more manual tracking</strong><span>Every member, payment, and renewal is logged and updated automatically in real time.</span></div>
+          </div>
+          <div class="al-item">
+            <div class="al-ic">🔄</div>
+            <div class="al-txt"><strong>No more missed renewals</strong><span>Smart alerts flag every expiring membership and auto-follow-up until it's renewed.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="flow fade-r">
+        <div class="flow-title">How GymAssist Works Behind the Scenes</div>
+        <div class="fn"><div class="fn-ic">🏋️</div><div><div class="fn-lbl">Member Joins / Renews</div><div class="fn-sub">Added via chat in under 10 seconds</div></div></div>
+        <div class="fa"><span>↓</span></div>
+        <div class="fn ai-step"><div class="fn-ic">🤖</div><div><div class="fn-lbl">AI Processes Request</div><div class="fn-sub">Logs payment, sets reminders automatically</div></div></div>
+        <div class="fa"><span>↓</span></div>
+        <div class="fn payment-step"><div class="fn-ic">💰</div><div><div class="fn-lbl">Payment Tracked</div><div class="fn-sub">Revenue dashboard updated instantly</div></div></div>
+        <div class="fa"><span>↓</span></div>
+        <div class="fn reminder-step"><div class="fn-ic">📲</div><div><div class="fn-lbl">Reminders Auto-Sent</div><div class="fn-sub">WhatsApp alerts go out on schedule</div></div></div>
+        <div class="fa"><span>↓</span></div>
+        <div class="fn analytics-step"><div class="fn-ic">📊</div><div><div class="fn-lbl">Analytics Updated Live</div><div class="fn-sub">You see everything in real time</div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §6 ANALYTICS
+════════════════════════════════════════════════ -->
+<section id="analytics" class="section">
+  <div class="wrap">
+    <div class="analytics-inner">
+      <div class="ana-visual fade-l">
+        <div class="ana-header">
+          <div class="ana-title">Revenue Analytics</div>
+          <div class="ana-badge">↑ Live Data</div>
+        </div>
+        <div class="ana-body">
+          <div class="chart-bars" id="chartBars">
+            <div class="bar-wrap"><div class="bar lo h45"></div><div class="bar-lbl">Jan</div></div>
+            <div class="bar-wrap"><div class="bar lo h55"></div><div class="bar-lbl">Feb</div></div>
+            <div class="bar-wrap"><div class="bar lo h40"></div><div class="bar-lbl">Mar</div></div>
+            <div class="bar-wrap"><div class="bar h60"></div><div class="bar-lbl">Apr</div></div>
+            <div class="bar-wrap"><div class="bar h70"></div><div class="bar-lbl">May</div></div>
+            <div class="bar-wrap"><div class="bar hi h90"></div><div class="bar-lbl">Jun</div></div>
+          </div>
+          <div class="ana-stats">
+            <div class="as-item"><div class="as-num">₹1.24L</div><div class="as-lbl">This Month</div></div>
+            <div class="as-item"><div class="as-num">+18%</div><div class="as-lbl">vs Last Month</div></div>
+            <div class="as-item"><div class="as-num">248</div><div class="as-lbl">Active Members</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="ana-right fade-r">
+        <div class="label">Analytics</div>
+        <h2 class="sh">Know your numbers. <em>Grow with clarity.</em></h2>
+        <p class="sp">See collections, pending dues, active members, renewals, churn signals, and monthly trends without waiting for manual reports.</p>
+        <div class="ana-points">
+          <div class="ap">Monthly and weekly revenue breakdown</div>
+          <div class="ap">Member growth and churn tracking</div>
+          <div class="ap">Collection efficiency and pending dues</div>
+          <div class="ap">Top-paying and at-risk members</div>
+          <div class="ap">Renewal conversion rate reports</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §7 TESTIMONIALS
+════════════════════════════════════════════════ -->
+<section id="testimonials" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">Social Proof</div>
+      <h2 class="sh">Built for gym owners who want control.</h2>
+      <p class="sp">The product is shaped around real gym workflows: dues, renewals, WhatsApp follow-ups, member records, and quick decisions.</p>
+    </div>
+    <div class="testi-grid">
+      <div class="testi-card fade">
+        <div class="tc-stars">★★★★★</div>
+        <p class="tc-quote">"Before GymAssist, I spent 3+ hours daily on admin. Now it's fully on autopilot. The WhatsApp reminders alone recovered ₹18,000 in my first month. I wish I'd found this sooner."</p>
+        <div class="tc-author"><div class="ta-av">RK</div><div><div class="ta-n">Rajesh Kumar</div><div class="ta-r">Owner, FitZone Gym · Delhi</div></div></div>
+      </div>
+      <div class="testi-card fade">
+        <div class="tc-stars">★★★★★</div>
+        <p class="tc-quote">"I had no idea how much I was losing to missed renewals. GymAssist caught 22 lapsed members in week one alone. Setup was 10 minutes. Absolute game-changer for my gym."</p>
+        <div class="tc-author"><div class="ta-av">PM</div><div><div class="ta-n">Priya Mehta</div><div class="ta-r">Owner, StrengthBox · Mumbai</div></div></div>
+      </div>
+      <div class="testi-card fade">
+        <div class="tc-stars">★★★★★</div>
+        <p class="tc-quote">"Just type 'add Amit paid 1500' and it's done. No training, no complexity. My revenue is up 22% since switching two months ago. My members even notice how professional we've become."</p>
+        <div class="tc-author"><div class="ta-av">AS</div><div><div class="ta-n">Arjun Sharma</div><div class="ta-r">Owner, PowerHouse Gym · Pune</div></div></div>
+      </div>
+    </div>
+    <div class="trust-strip fade">
+      <div class="ts-item"><div class="ts-n">500+</div><div class="ts-l">Gyms Using GymAssist</div></div>
+      <div class="ts-item"><div class="ts-n">₹2Cr+</div><div class="ts-l">Revenue Tracked Monthly</div></div>
+      <div class="ts-item"><div class="ts-n">40,000+</div><div class="ts-l">Members Managed</div></div>
+      <div class="ts-item"><div class="ts-n">3+ hrs</div><div class="ts-l">Saved Per Day on Average</div></div>
+      <div class="ts-item"><div class="ts-n">4.9★</div><div class="ts-l">Average Owner Rating</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §8 TRANSFORMATION
+════════════════════════════════════════════════ -->
+<section id="transform" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">Transformation</div>
+      <h2 class="sh">From scattered admin to <em>one clear system.</em></h2>
+      <p class="sp">See how GymAssist changes daily operations from the first week of use.</p>
+    </div>
+    <div class="tx-grid">
+      <div class="tx-card bef fade-l">
+        <div class="tx-head">❌ Before GymAssist</div>
+        <div class="tx-item"><div class="tx-dot"></div>3+ hours wasted on admin every day</div>
+        <div class="tx-item"><div class="tx-dot"></div>Missed payments costing ₹10k–₹50k/month</div>
+        <div class="tx-item"><div class="tx-dot"></div>Members lapsing with zero notice</div>
+        <div class="tx-item"><div class="tx-dot"></div>Messy spreadsheets and WhatsApp chaos</div>
+        <div class="tx-item"><div class="tx-dot"></div>Zero visibility into revenue trends</div>
+        <div class="tx-item"><div class="tx-dot"></div>Unprofessional, error-prone operations</div>
+      </div>
+      <div class="tx-arrow fade">→</div>
+      <div class="tx-card aft fade-r">
+        <div class="tx-head">✅ After GymAssist</div>
+        <div class="tx-item"><div class="tx-dot"></div>Save 3+ hours every single day</div>
+        <div class="tx-item"><div class="tx-dot"></div>Higher revenue — no payment slips through</div>
+        <div class="tx-item"><div class="tx-dot"></div>Zero missed renewals — all auto-tracked</div>
+        <div class="tx-item"><div class="tx-dot"></div>One clean dashboard, one chat interface</div>
+        <div class="tx-item"><div class="tx-dot"></div>Live analytics and monthly revenue insights</div>
+        <div class="tx-item"><div class="tx-dot"></div>Professional operations that impress members</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §9 PRICING
+════════════════════════════════════════════════ -->
+<section id="pricing" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">Pricing</div>
+      <h2 class="sh">Simple pricing for modern gyms.</h2>
+      <p class="sp">Start free, then choose the plan that helps your gym automate payments, reminders, renewals, and member management.</p>
+      <div class="payment-strip" aria-label="Supported payment options">
+        <span class="pay-chip">UPI</span>
+        <span class="pay-chip">Cards</span>
+        <span class="pay-chip">Netbanking</span>
+        <span class="pay-chip">International cards ready</span>
+      </div>
+    </div>
+
+    <div class="trial-strip fade">
+      <strong>15-Day FREE Trial</strong>
+      <span>No credit card required • Full access • Setup in minutes</span>
+    </div>
+
+    <!-- Paid plans -->
+    <div class="price-grid">
+      <div class="price-card fade">
+        <div class="pc-tier">Monthly</div>
+        <div class="pc-note">Best for trying</div>
+        <div class="pc-price"><sup>₹</sup>299<sub>/mo</sub></div>
+        <div class="pc-note">Billed monthly · Cancel anytime</div>
+        <div class="pc-sep"></div>
+        <div class="pc-feats">
+          <div class="pf"><div class="pf-c">✓</div>Track all members easily</div>
+          <div class="pf"><div class="pf-c">✓</div>Auto WhatsApp reminders</div>
+          <div class="pf"><div class="pf-c">✓</div>Never miss renewals</div>
+          <div class="pf"><div class="pf-c">✓</div>AI-powered payment tracking</div>
+          <div class="pf"><div class="pf-c">✓</div>Save 3+ admin hours daily</div>
+          <div class="pf"><div class="pf-c">✓</div>Revenue analytics dashboard</div>
+        </div>
+        <button class="btn btn-g pay-btn" type="button" data-payment-button-id="pl_SoPlaLiyxrn5Qd" onclick="beginPlanFlow('monthly')">Get Started <span class="pay-arrow">→</span></button>
+        <button class="qr-pay-btn" type="button" onclick="beginPlanFlow('monthly','qr')">Prefer UPI? Scan QR</button>
+        <div class="plan-proof">⭐ Trusted by gym owners across India</div>
+        <div class="plan-microcopy"><span>✓ Setup in 5 minutes</span><span>✓ WhatsApp support</span></div>
+      </div>
+      <div class="price-card fade">
+        <div class="pc-tier">6 Months</div>
+        <div class="pc-note">Most popular</div>
+        <div class="pc-price"><sup>₹</sup>1199<sub>/6mo</sub></div>
+        <div class="pc-monthly">Only ₹200/month billed 6-monthly</div>
+        <div class="pc-note save">Save ₹595 vs monthly</div>
+        <div class="pc-sep"></div>
+        <div class="pc-feats">
+          <div class="pf"><div class="pf-c">✓</div>Track all members easily</div>
+          <div class="pf"><div class="pf-c">✓</div>Auto WhatsApp reminders</div>
+          <div class="pf"><div class="pf-c">✓</div>Never miss renewals</div>
+          <div class="pf"><div class="pf-c">✓</div>AI-powered payment tracking</div>
+          <div class="pf"><div class="pf-c">✓</div>Save 3+ admin hours daily</div>
+          <div class="pf"><div class="pf-c">✓</div>Revenue analytics dashboard</div>
+        </div>
+        <button class="btn btn-g pay-btn" type="button" data-payment-button-id="pl_SoPwEst5c0FuER" onclick="beginPlanFlow('sixMonths')">Upgrade My Gym <span class="pay-arrow">→</span></button>
+        <button class="qr-pay-btn" type="button" onclick="beginPlanFlow('sixMonths','qr')">Prefer UPI? Scan QR</button>
+        <div class="plan-proof">⚡ Growing gyms switch to automate operations</div>
+        <div class="plan-microcopy"><span>✓ No technical skills</span><span>✓ Setup assistance</span></div>
+      </div>
+      <div class="price-card pop fade">
+        <div class="pop-badge">Best for Growing Gyms</div>
+        <div class="pc-tier">Annual</div>
+        <div class="pc-note">Best value</div>
+        <div class="pc-price"><sup>₹</sup>1999<sub>/yr</sub></div>
+        <div class="pc-monthly">Only ₹166/month billed yearly</div>
+        <div class="pc-note save">Best value · Save ₹1,589 vs monthly</div>
+        <div class="pc-sep"></div>
+        <div class="pc-feats">
+          <div class="pf"><div class="pf-c">✓</div>Track all members easily</div>
+          <div class="pf"><div class="pf-c">✓</div>Auto WhatsApp reminders</div>
+          <div class="pf"><div class="pf-c">✓</div>Never miss renewals</div>
+          <div class="pf"><div class="pf-c">✓</div>AI-powered payment tracking</div>
+          <div class="pf"><div class="pf-c">✓</div>Save 3+ admin hours daily</div>
+          <div class="pf"><div class="pf-c">✓</div>Revenue analytics dashboard</div>
+        </div>
+        <button class="btn btn-p pay-btn" type="button" data-payment-button-id="pl_SoPy1jar72rMUq" onclick="beginPlanFlow('annual')">Start Annual Plan <span class="pay-arrow">→</span></button>
+        <button class="qr-pay-btn" type="button" onclick="beginPlanFlow('annual','qr')">Prefer UPI? Scan QR</button>
+        <div class="plan-proof">Most growing gyms choose annual to stay automated</div>
+        <div class="plan-microcopy"><span>✓ Setup in 5 minutes</span><span>✓ WhatsApp support included</span></div>
+      </div>
+    </div>
+    <div class="pricing-trust-row fade">
+      <span>✓ No hidden charges</span>
+      <span>✓ Cancel anytime</span>
+      <span>✓ WhatsApp support</span>
+      <span>✓ Setup assistance included</span>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §9B BROCHURE
+════════════════════════════════════════════════ -->
+<section id="brochure" class="section">
+  <div class="wrap">
+    <div class="brochure-grid">
+      <div class="brochure-card fade-l">
+        <div class="label">Product Overview</div>
+        <h2 class="sh">Want the complete product breakdown?</h2>
+        <p class="sp">Download the GymAssist AI brochure to review features, automation workflows, pricing plans, setup details, and growth benefits.</p>
+        <div class="brochure-actions">
+          <a href="gymassistbrochure.pdf" class="btn btn-p" download>Download Brochure</a>
+          <button class="btn btn-g" type="button" onclick="openDemoModal()">Watch Demo</button>
+        </div>
+      </div>
+      <div class="brochure-preview fade-r">
+        <iframe src="gymassistbrochure.pdf#toolbar=0" title="GymAssist AI brochure PDF preview" loading="lazy"></iframe>
+        <div class="brochure-fallback">Open the brochure PDF for the full product overview, workflows, pricing plans, and growth benefits.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §10 FAQ
+════════════════════════════════════════════════ -->
+<section id="faq" class="section">
+  <div class="wrap">
+    <div class="center fade">
+      <div class="label">FAQ</div>
+      <h2 class="sh">Common questions, answered clearly.</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What is GymAssist AI?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">GymAssist AI is an AI-powered gym management software designed for Indian gym owners and personal trainers. It lets you manage members, track payments, send WhatsApp reminders, generate diet plans, and view revenue analytics — all through a simple chat interface or dashboard. No complex software training needed.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How does the free trial work?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">You get 15 days of full, unrestricted access to GymAssist AI — completely free. No credit card required to start. You'll have access to every feature including member management, payment tracking, WhatsApp reminders, and analytics. At the end of the trial, choose any plan to continue — or walk away with no charges.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I send WhatsApp reminders to my members?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">Yes! WhatsApp reminders are a core feature. GymAssist automatically sends renewal reminders 7, 3, and 1 day before a membership expires, plus overdue payment follow-ups. You can also trigger custom WhatsApp messages to individual members or groups instantly from the chat interface.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Does it support payment tracking?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">Absolutely. You can log any payment by simply typing it (e.g., "Amit paid ₹1500"). GymAssist records it automatically, updates the member's account, and reflects it in your real-time revenue dashboard. You can view daily, weekly, and monthly collections, pending dues, and top-paying members at any time.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Is it suitable for personal trainers?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">Yes! GymAssist is built for both gym owners and independent personal trainers. Whether you manage 10 or 1,000 clients, the platform scales with you. The AI diet plan generator is particularly useful for trainers who want to offer personalized nutrition plans without spending extra time on them.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">Can I manage multiple members at once?<div class="faq-chevron">▾</div></div>
+        <div class="faq-a">Yes. All plans include unlimited member management with no cap. You can view all members, filter by status (active, expired, pending), send bulk reminders, and get reports on any segment — all within seconds. The dashboard gives you a complete overview of your entire member base at a glance.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════
+     §11 FINAL CTA
+════════════════════════════════════════════════ -->
+<section id="cta" class="section">
+  <div class="cta-bg"></div>
+  <div class="wrap">
+    <div class="cta-inner fade">
+      <div class="label">Get Started Today</div>
+      <h2>Run your gym with less admin and more control.</h2>
+      <p>Start with full access, test the workflows, and see how quickly AI can clean up payments, reminders, renewals, and reporting.</p>
+      <div class="cta-btns">
+        <button class="btn btn-p" type="button" onclick="beginTrialFlow()">Start 15-Day FREE Trial</button>
+        <button class="btn btn-g" type="button" onclick="openDemoModal()">Watch Live Demo</button>
+        <a href="gymassistbrochure.pdf" class="btn btn-subtle" download>Get Full Product Overview</a>
+      </div>
+      <p class="cta-dm">Need setup guidance? <strong>WhatsApp and email support are available.</strong></p>
+      <div class="cta-btns">
+        <a href="https://wa.me/919654939584" class="cta-contact" target="_blank" rel="noopener">WhatsApp Us</a>
+        <a href="mailto:gymassist.ai@gmail.com" class="btn btn-g">Email Us</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════════ -->
+<footer>
+  <div class="footer-top">
+    <div class="footer-brand">
+      <a class="logo footer-logo" href="#hero" aria-label="GymAssist AI home">
+        <img src="gymassistai-mark-web.png" alt="" width="34" height="34"/>
+        <span>GymAssist AI</span>
+      </a>
+      <p>AI-powered gym management software built for Indian gym owners and fitness trainers.</p>
+    </div>
+    <div class="footer-links">
+      <h4>Product</h4>
+      <a href="#features">Features</a>
+      <a href="#demo">Demo</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="gymassistbrochure.pdf" download>Download Brochure</a>
+    </div>
+    <div class="footer-links">
+      <h4>Legal</h4>
+      <a href="#">Privacy Policy</a>
+      <a href="#">Terms of Service</a>
+      <a href="#">Refund Policy</a>
+    </div>
+    <div class="footer-contact">
+      <h4>Contact Us</h4>
+      <a href="https://wa.me/919654939584" class="wa-btn" target="_blank" rel="noopener">Contact on WhatsApp</a>
+      <a href="mailto:gymassist.ai@gmail.com" class="email-btn">gymassist.ai@gmail.com</a>
+      <a href="gymassistbrochure.pdf" class="nav-login footer-pill" download>View Features PDF</a>
+      <!-- ★ REPLACE href WITH YOUR LOGIN URL ★ -->
+      <button class="nav-login footer-pill" type="button" onclick="redirectExistingUser()">Log In →</button>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p>© 2026 GymAssist AI. All rights reserved. Built for Indian gym owners.</p>
+    <div class="footer-bottom-links">
+      <a href="#">Privacy</a>
+      <a href="#">Terms</a>
+      <a href="#">Contact</a>
+    </div>
+  </div>
+</footer>
+
+<!-- ════════════════════════════════════════════════
+     STICKY BAR
+════════════════════════════════════════════════ -->
+<div class="sticky" id="stickyBar">
+  <div class="sticky-l"><p><strong>GymAssist AI</strong> — 15-Day FREE Trial, no credit card required</p></div>
+  <div class="sticky-r">
+    <a href="https://wa.me/919654939584" class="btn btn-g btn-sm" target="_blank" rel="noopener">WhatsApp</a>
+    <button class="btn btn-p btn-sm" type="button" onclick="beginTrialFlow()">Start Free Trial</button>
+  </div>
+</div>
+
+<!-- Floating Conversion Actions -->
+<div class="floating-actions" id="quickActions" aria-label="Quick actions">
+  <div class="float-action-panel" id="quickActionPanel">
+    <a href="https://wa.me/919654939584" class="float-action wa" target="_blank" rel="noopener" aria-label="WhatsApp GymAssist AI" onclick="closeQuickActions()">
+      <i>WA</i><span>WhatsApp</span>
+    </a>
+    <button class="float-action demo" type="button" onclick="openDemoModal()" aria-label="Watch GymAssist AI demo">
+      <i>▶</i><span>Watch Demo</span>
+    </button>
+    <a href="gymassistbrochure.pdf" class="float-action pdf" download aria-label="Download GymAssist AI brochure" onclick="closeQuickActions()">
+      <i>PDF</i><span>Brochure</span>
+    </a>
+  </div>
+  <button class="quick-toggle" type="button" onclick="toggleQuickActions()" aria-label="Open quick actions" aria-expanded="false" aria-controls="quickActionPanel">
+    <i>+</i><span>Quick Actions</span><span class="qt-arrow">⌃</span>
+  </button>
+</div>
+
+<!-- Demo Video Modal -->
+<div class="demo-modal" id="demoModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="GymAssist AI demo video">
+  <div class="demo-backdrop" onclick="closeDemoModal()"></div>
+  <div class="demo-dialog">
+    <div class="demo-modal-head">
+      <strong>GymAssist AI Live Demo</strong>
+      <button class="demo-close" type="button" onclick="closeDemoModal()" aria-label="Close demo video">×</button>
+    </div>
+    <div class="demo-frame">
+      <iframe id="demoModalFrame"
+        title="GymAssist AI Demo Video"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+    </div>
+    <div class="video-caption">
+      <strong>Having trouble with the player?</strong>
+      <a href="https://youtu.be/JlPtqbcmPu8" target="_blank" rel="noopener">Watch video on YouTube</a>
+    </div>
+  </div>
+</div>
+
+<!-- Payment QR Modal -->
+<div class="pay-modal" id="paymentModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="GymAssist AI payment options">
+  <div class="pay-backdrop" onclick="closePaymentModal()"></div>
+  <div class="pay-dialog">
+    <div class="pay-modal-head">
+      <strong>Secure Razorpay Payment</strong>
+      <button class="pay-close" type="button" onclick="closePaymentModal()" aria-label="Close payment options">×</button>
+    </div>
+    <div class="pay-body">
+      <div class="pay-plan-name" id="payPlanName">GymAssist AI Plan</div>
+      <div class="pay-plan-price" id="payPlanPrice">Secure checkout</div>
+      <div class="pay-qr-wrap">
+        <img id="payQrImage" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="Razorpay QR code for selected GymAssist AI plan"/>
+      </div>
+      <p class="pay-help">Scan this QR to open Razorpay checkout, or use the button below for one-click payment.</p>
+      <div class="pay-actions">
+        <button class="btn btn-p" type="button" id="payNowBtn">Pay Securely with Razorpay</button>
+        <a href="https://wa.me/919654939584" class="btn btn-g" target="_blank" rel="noopener">Need Help? WhatsApp Us</a>
+      </div>
+      <div class="pay-safe">
+        <span>UPI</span><span>Cards</span><span>Netbanking</span><span>Razorpay-secured</span>
+      </div>
+    </div>
+  </div>
+</div>`;
+
+type LandingWindow = Window & {
+  beginPlanFlow?: (planKey: string, nextAction?: string) => void;
+  beginTrialFlow?: () => void;
+  closeDemoModal?: () => void;
+  closeM?: () => void;
+  closePaymentModal?: () => void;
+  closeQuickActions?: () => void;
+  openDemoModal?: () => void;
+  openM?: () => void;
+  openPaymentQr?: (planKey: string) => void;
+  redirectExistingUser?: () => void;
+  toggleFaq?: (el: HTMLElement) => void;
+  toggleQuickActions?: () => void;
+};
+
+const checkoutPlans: Record<string, { billingCycle: string; link: string; name: string; price: string; qrImage: string }> = {
+  monthly: {
+    billingCycle: 'monthly',
+    link: 'https://rzp.io/rzp/tGUxdyc',
+    name: 'Monthly Plan',
+    price: '?299/month',
+    qrImage: 'razorpay-monthly-qr.jpeg',
+  },
+  sixMonths: {
+    billingCycle: 'six_months',
+    link: 'https://rzp.io/rzp/aKf4wBh8',
+    name: '6-Month Plan',
+    price: '?1,199/6 months',
+    qrImage: 'razorpay-six-months-qr.jpeg',
+  },
+  annual: {
+    billingCycle: 'annual',
+    link: 'https://rzp.io/rzp/D5CNSgj',
+    name: 'Annual Plan',
+    price: '?1,999/year',
+    qrImage: 'razorpay-annual-qr.jpeg',
+  },
+};
+
+function storeJourney(planKey: string, nextAction = 'dashboard') {
+  const plan = checkoutPlans[planKey];
+  const journey = plan
+    ? {
+        billingCycle: plan.billingCycle,
+        intent: 'paid',
+        nextAction,
+        paymentLink: plan.link,
+        planName: plan.name,
+        planPrice: plan.price,
+        selectedPlan: planKey,
+        savedAt: new Date().toISOString(),
+      }
+    : {
+        billingCycle: 'trial',
+        intent: 'trial',
+        nextAction: 'dashboard',
+        paymentLink: '',
+        planName: '15-Day FREE Trial',
+        planPrice: 'FREE ? No credit card',
+        selectedPlan: 'trial',
+        savedAt: new Date().toISOString(),
+      };
+
+  localStorage.setItem('gymassist_pending_journey', JSON.stringify(journey));
+  sessionStorage.setItem('gymassist_pending_journey', JSON.stringify(journey));
+  localStorage.setItem('selectedPlan', journey.selectedPlan);
+  localStorage.setItem('billingCycle', journey.billingCycle);
+  localStorage.setItem('paymentLink', journey.paymentLink);
+  sessionStorage.setItem('selectedPlan', journey.selectedPlan);
+  sessionStorage.setItem('billingCycle', journey.billingCycle);
+  sessionStorage.setItem('paymentLink', journey.paymentLink);
+  return journey;
+}
+
+function loginUrl(extra: Record<string, string>) {
+  const params = new URLSearchParams({
+    source: 'gymassist_landing',
+    ...extra,
+  });
+  return `/login?${params.toString()}`;
+}
+
+export default function OriginalHomepage() {
+  useEffect(() => {
+    const landingWindow = window as LandingWindow;
+    const stickyBar = document.getElementById('stickyBar');
+    const quickActions = document.getElementById('quickActions');
+    const quickToggle = quickActions?.querySelector('.quick-toggle') as HTMLButtonElement | null;
+    const mobileMenu = document.getElementById('mobMenu');
+    const hamburger = document.querySelector('.ham') as HTMLButtonElement | null;
+    const demoModal = document.getElementById('demoModal');
+    const demoFrame = document.getElementById('demoModalFrame') as HTMLIFrameElement | null;
+    const paymentModal = document.getElementById('paymentModal');
+    const payPlanName = document.getElementById('payPlanName');
+    const payPlanPrice = document.getElementById('payPlanPrice');
+    const payQrImage = document.getElementById('payQrImage') as HTMLImageElement | null;
+    const payNowBtn = document.getElementById('payNowBtn') as HTMLButtonElement | null;
+
+    const setQuickActions = (open: boolean) => {
+      quickActions?.classList.toggle('open', open);
+      quickToggle?.setAttribute('aria-expanded', open ? 'true' : 'false');
+      quickToggle?.setAttribute('aria-label', open ? 'Close quick actions' : 'Open quick actions');
+    };
+
+    const onScroll = () => {
+      stickyBar?.classList.toggle('show', window.scrollY > 450);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.12 },
+    );
+
+    document.querySelectorAll('.fade,.fade-l,.fade-r').forEach((el) => observer.observe(el));
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+
+    landingWindow.openM = () => {
+      mobileMenu?.classList.add('open');
+      hamburger?.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    };
+
+    landingWindow.closeM = () => {
+      mobileMenu?.classList.remove('open');
+      hamburger?.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    };
+
+    landingWindow.beginTrialFlow = () => {
+      storeJourney('trial');
+      window.location.href = loginUrl({ authMode: 'signup', continueAfterLogin: '1', selectedPlan: 'trial', billingCycle: 'trial' });
+    };
+
+    landingWindow.beginPlanFlow = (planKey: string, nextAction = 'checkout') => {
+      const journey = storeJourney(planKey, nextAction);
+      if (nextAction === 'qr') {
+        landingWindow.openPaymentQr?.(planKey);
+        return;
+      }
+      window.location.href = loginUrl({
+        authMode: 'signup',
+        billingCycle: journey.billingCycle,
+        continueAfterLogin: '1',
+        paymentLink: journey.paymentLink,
+        selectedPlan: journey.selectedPlan,
+      });
+    };
+
+    landingWindow.redirectExistingUser = () => {
+      const selectedPlan = localStorage.getItem('selectedPlan') || 'trial';
+      const billingCycle = localStorage.getItem('billingCycle') || selectedPlan;
+      const paymentLink = localStorage.getItem('paymentLink') || '';
+      window.location.href = loginUrl({ authMode: 'login', billingCycle, continueAfterLogin: '1', paymentLink, selectedPlan });
+    };
+
+    landingWindow.openDemoModal = () => {
+      if (!demoModal || !demoFrame) {
+        window.open('https://youtu.be/JlPtqbcmPu8', '_blank', 'noopener');
+        return;
+      }
+      demoFrame.src = 'https://www.youtube.com/embed/JlPtqbcmPu8?autoplay=1&rel=0';
+      demoModal.classList.add('open');
+      demoModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    };
+
+    landingWindow.closeDemoModal = () => {
+      demoModal?.classList.remove('open');
+      demoModal?.setAttribute('aria-hidden', 'true');
+      if (demoFrame) demoFrame.src = '';
+      document.body.style.overflow = '';
+    };
+
+    landingWindow.closePaymentModal = () => {
+      paymentModal?.classList.remove('open');
+      paymentModal?.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    };
+
+    landingWindow.openPaymentQr = (planKey: string) => {
+      const plan = checkoutPlans[planKey];
+      if (!plan || !paymentModal) return;
+      if (payPlanName) payPlanName.textContent = plan.name;
+      if (payPlanPrice) payPlanPrice.textContent = plan.price;
+      if (payQrImage) payQrImage.src = plan.qrImage;
+      if (payNowBtn) payNowBtn.onclick = () => { window.location.href = plan.link; };
+      paymentModal.classList.add('open');
+      paymentModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    };
+
+    landingWindow.toggleQuickActions = () => setQuickActions(!quickActions?.classList.contains('open'));
+    landingWindow.closeQuickActions = () => setQuickActions(false);
+
+    landingWindow.toggleFaq = (el: HTMLElement) => {
+      const item = el.closest('.faq-item');
+      if (!item) return;
+      document.querySelectorAll('.faq-item.open').forEach((openItem) => {
+        if (openItem !== item) openItem.classList.remove('open');
+      });
+      item.classList.toggle('open');
+      el.setAttribute('aria-expanded', item.classList.contains('open') ? 'true' : 'false');
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      if (demoModal?.classList.contains('open')) landingWindow.closeDemoModal?.();
+      if (paymentModal?.classList.contains('open')) landingWindow.closePaymentModal?.();
+      if (mobileMenu?.classList.contains('open')) landingWindow.closeM?.();
+      setQuickActions(false);
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('scroll', onScroll);
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, []);
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: homepageStyles }} />
+      <div className="original-homepage" dangerouslySetInnerHTML={{ __html: homepageMarkup }} />
+    </>
+  );
+}
