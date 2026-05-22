@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'crypto';
+import { firstRuntimeEnv, getRuntimeEnv } from '@/lib/runtimeEnv';
 
 type AppSessionPayload = {
   exp: number;
@@ -18,16 +19,12 @@ function base64UrlDecode(value: string) {
 }
 
 function getSessionSecret() {
-  const configuredSecret =
-    process.env.JWT_SECRET ||
-    process.env.SESSION_SECRET ||
-    process.env.AUTH_SESSION_SECRET ||
-    '';
+  const configuredSecret = firstRuntimeEnv(['JWT_SECRET', 'SESSION_SECRET', 'AUTH_SESSION_SECRET']);
 
   if (configuredSecret) return configuredSecret;
 
   if (process.env.NODE_ENV !== 'production' && process.env.ALLOW_LOCAL_AUTH_FALLBACK === 'true') {
-    return process.env.SUPABASE_SERVICE_ROLE_KEY || 'gymassist-local-dev-session-secret';
+    return getRuntimeEnv('SUPABASE_SERVICE_ROLE_KEY') || 'gymassist-local-dev-session-secret';
   }
 
   return '';

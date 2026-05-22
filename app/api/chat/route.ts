@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { FunctionDeclaration, GoogleGenAI, Type } from '@google/genai';
+import { getRuntimeEnv } from '@/lib/runtimeEnv';
 
 type AiProvider = 'groq' | 'openai' | 'gemini';
 type ToolName = 'prepareWhatsApp' | 'prepareSMS' | 'generateDietPlan' | 'generateWorkoutPlan';
@@ -387,7 +388,7 @@ function parseFunctionArgs(value: unknown) {
 }
 
 function providerOrder(): AiProvider[] {
-  const requested = (process.env.AI_PROVIDER || 'auto').trim().toLowerCase();
+  const requested = (getRuntimeEnv('AI_PROVIDER') || 'auto').trim().toLowerCase();
   if (requested === 'groq') return ['groq', 'openai', 'gemini'];
   if (requested === 'gemini') return ['gemini', 'openai'];
   if (requested === 'openai') return ['openai', 'groq', 'gemini'];
@@ -727,9 +728,9 @@ function geminiDeclarations(allowedNames?: ToolName[]): FunctionDeclaration[] {
 
 async function callOpenAI(messages: ChatMessage[], systemInstruction: string, latestUserPrompt: string) {
   return callOpenAICompatibleProvider({
-    apiKey: process.env.OPENAI_API_KEY,
-    baseUrl: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1',
-    defaultModel: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+    apiKey: getRuntimeEnv('OPENAI_API_KEY'),
+    baseUrl: getRuntimeEnv('OPENAI_BASE_URL') || 'https://api.openai.com/v1',
+    defaultModel: getRuntimeEnv('OPENAI_MODEL') || 'gpt-4o-mini',
     latestUserPrompt,
     messages,
     providerName: 'OpenAI',
@@ -739,9 +740,9 @@ async function callOpenAI(messages: ChatMessage[], systemInstruction: string, la
 
 async function callGroq(messages: ChatMessage[], systemInstruction: string, latestUserPrompt: string) {
   return callOpenAICompatibleProvider({
-    apiKey: process.env.GROQ_API_KEY,
-    baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1',
-    defaultModel: process.env.GROQ_MODEL || 'llama-3.3-70b-versatile',
+    apiKey: getRuntimeEnv('GROQ_API_KEY'),
+    baseUrl: getRuntimeEnv('GROQ_BASE_URL') || 'https://api.groq.com/openai/v1',
+    defaultModel: getRuntimeEnv('GROQ_MODEL') || 'llama-3.3-70b-versatile',
     latestUserPrompt,
     messages,
     providerName: 'Groq',
@@ -752,7 +753,7 @@ async function callGroq(messages: ChatMessage[], systemInstruction: string, late
 async function callGeminiTextOnly(messages: ChatMessage[], systemInstruction: string, apiKey: string) {
   const ai = new GoogleGenAI({ apiKey });
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+    model: getRuntimeEnv('GEMINI_MODEL') || 'gemini-3-flash-preview',
     contents: messages.map((message) => ({
       role: message.role,
       parts: [{ text: message.content }],
@@ -770,13 +771,13 @@ async function callGeminiTextOnly(messages: ChatMessage[], systemInstruction: st
 }
 
 async function callGemini(messages: ChatMessage[], systemInstruction: string, latestUserPrompt: string) {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+  const apiKey = getRuntimeEnv('GEMINI_API_KEY') || getRuntimeEnv('NEXT_PUBLIC_GEMINI_API_KEY');
   if (!apiKey) throw new Error('GEMINI_API_KEY is missing.');
 
   const ai = new GoogleGenAI({ apiKey });
   const declarations = geminiDeclarations(allowedToolNamesForPrompt(latestUserPrompt));
   const response = await ai.models.generateContent({
-    model: process.env.GEMINI_MODEL || 'gemini-3-flash-preview',
+    model: getRuntimeEnv('GEMINI_MODEL') || 'gemini-3-flash-preview',
     contents: messages.map((message) => ({
       role: message.role,
       parts: [{ text: message.content }],
