@@ -5,6 +5,7 @@ create table if not exists public.users (
   hashed_password text not null,
   upi_id text,
   created_at timestamptz default current_timestamp,
+  referral text,
   email text,
   phone_no text,
   plan_type text,
@@ -22,6 +23,7 @@ alter table public.users add column if not exists username text;
 alter table public.users add column if not exists hashed_password text;
 alter table public.users add column if not exists upi_id text;
 alter table public.users add column if not exists created_at timestamptz default current_timestamp;
+alter table public.users add column if not exists referral text;
 alter table public.users add column if not exists email text;
 alter table public.users add column if not exists phone_no text;
 alter table public.users add column if not exists plan_type text;
@@ -62,6 +64,10 @@ where email is not null;
 
 create index if not exists users_created_at_idx
 on public.users (created_at desc);
+
+create index if not exists users_referral_idx
+on public.users (referral)
+where referral is not null and trim(referral) <> '';
 
 alter table public.users enable row level security;
 revoke all on table public.users from anon, authenticated;

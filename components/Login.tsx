@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { AlertCircle, Dumbbell, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, User } from 'lucide-react';
+import { AlertCircle, Dumbbell, Eye, EyeOff, Lock, Mail, ShieldCheck, Sparkles, TicketPercent, User } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface LoginProps {
@@ -14,6 +14,7 @@ export default function Login({ onLogin }: LoginProps) {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [referral, setReferral] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [paymentLink, setPaymentLink] = useState('');
@@ -58,6 +59,7 @@ export default function Login({ onLogin }: LoginProps) {
 
     const cleanEmail = email.trim().toLowerCase();
     const cleanUsername = username.trim();
+    const cleanReferral = referral.trim();
     if (!cleanEmail || !password || (mode === 'signup' && !cleanUsername)) {
       setError('Please fill all required fields.');
       return;
@@ -77,7 +79,7 @@ export default function Login({ onLogin }: LoginProps) {
         body: JSON.stringify({
           email: cleanEmail,
           password,
-          username: cleanUsername,
+          ...(mode === 'signup' ? { referral: cleanReferral || null, username: cleanUsername } : {}),
           ...readPendingPlanSelection(),
         }),
       });
@@ -86,6 +88,7 @@ export default function Login({ onLogin }: LoginProps) {
       if (res.ok) {
         setSuccess(mode === 'signup' ? 'Account created. Opening dashboard...' : 'Login successful. Opening dashboard...');
         setPassword('');
+        setReferral('');
         onLogin(data.userId, data.upiId);
       } else {
         setPaymentLink(data.paymentLink || '');
@@ -236,6 +239,23 @@ export default function Login({ onLogin }: LoginProps) {
                 </button>
               </div>
             </div>
+
+            {mode === 'signup' && (
+              <div>
+                <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Referral Code</label>
+                <div className="relative">
+                  <TicketPercent className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
+                  <input
+                    type="text"
+                    autoComplete="off"
+                    value={referral}
+                    onChange={(e) => setReferral(e.target.value)}
+                    className="w-full rounded-lg border border-white/10 bg-black/25 py-3 pl-10 pr-4 text-sm text-white outline-none transition placeholder:text-white/28 focus:border-emerald-300/60 focus:ring-4 focus:ring-emerald-300/10"
+                    placeholder="Referral code (optional)"
+                  />
+                </div>
+              </div>
+            )}
 
             <button
               type="submit"

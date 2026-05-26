@@ -1,6 +1,7 @@
 export type AuthInput = {
   email: string;
   password: string;
+  referral?: string | null;
   username?: string;
 };
 
@@ -18,6 +19,11 @@ export function normalizeUsername(username: unknown) {
     .replace(/[^a-zA-Z0-9_-]/g, '');
 }
 
+export function normalizeReferral(referral: unknown) {
+  const value = typeof referral === 'string' ? referral : String(referral || '');
+  return value.trim() || null;
+}
+
 export function validateLoginInput(body: any): AuthInput {
   const email = normalizeEmail(body?.email);
   const password = String(body?.password || '');
@@ -32,6 +38,7 @@ export function validateLoginInput(body: any): AuthInput {
 export function validateSignupInput(body: any): Required<AuthInput> {
   const email = normalizeEmail(body?.email);
   const password = String(body?.password || '');
+  const referral = normalizeReferral(body?.referral ?? body?.referal);
   const username = normalizeUsername(body?.username);
 
   if (!EMAIL_PATTERN.test(email)) {
@@ -46,5 +53,5 @@ export function validateSignupInput(body: any): Required<AuthInput> {
     throw new Error('Password must be at least 8 characters');
   }
 
-  return { email, password, username };
+  return { email, password, referral, username };
 }

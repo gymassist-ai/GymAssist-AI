@@ -14,15 +14,35 @@ function isRecoverableUserShapeError(error: any) {
     isMissingColumnError(error, 'password') ||
     isMissingColumnError(error, 'created_at') ||
     isMissingColumnError(error, 'updated_at') ||
-    isMissingColumnError(error, 'upi_id')
+    isMissingColumnError(error, 'upi_id') ||
+    isMissingColumnError(error, 'referral')
   );
 }
 
-async function insertUserAccount(username: string, email: string, hashedPassword: string) {
+async function insertUserAccount(username: string, email: string, hashedPassword: string, referral: string | null) {
   if (!supabase) throw new Error('Authentication is not configured');
 
   const now = new Date().toISOString();
-  const insertPayloads: Record<string, string>[] = [
+  const insertPayloads: Record<string, string | null>[] = [
+    {
+      username,
+      email,
+      hashed_password: hashedPassword,
+      referral,
+    },
+    {
+      username,
+      email,
+      hashed_password: hashedPassword,
+      created_at: now,
+      referral,
+    },
+    {
+      username,
+      email,
+      password: hashedPassword,
+      referral,
+    },
     {
       username,
       email,
@@ -33,11 +53,6 @@ async function insertUserAccount(username: string, email: string, hashedPassword
       email,
       hashed_password: hashedPassword,
       created_at: now,
-    },
-    {
-      username,
-      email,
-      hashed_password: hashedPassword,
     },
     {
       username,
@@ -86,7 +101,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password, username } = validateSignupInput(body);
+    const { email, password, referral, username } = validateSignupInput(body);
     const planSelection = normalizePlanSelection(body);
     const { data: existingEmail, error: lookupError } = await supabase
       .from('users')
@@ -117,7 +132,7 @@ export async function POST(request: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
-    const { data: user, error: insertError } = await insertUserAccount(username, email, hashedPassword);
+    const { data: user, error: insertError } = await insertUserAccount(username, email, hashedPassword, referral);
 
     if (insertError || !user) {
       const status = isUniqueConstraintError(insertError) ? 409 : 500;

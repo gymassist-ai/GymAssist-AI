@@ -14,6 +14,8 @@ const loginRoute = fs.readFileSync('app/api/auth/login/route.ts', 'utf8');
 const signupRoute = fs.readFileSync('app/api/auth/signup/route.ts', 'utf8');
 const loginUi = fs.readFileSync('components/Login.tsx', 'utf8');
 const trialLogic = fs.readFileSync('lib/auth/trial.ts', 'utf8');
+const authSchema = fs.readFileSync('supabase/auth_security.sql', 'utf8');
+const memberTableSchema = fs.readFileSync('supabase/gymassist_user_tables.sql', 'utf8');
 
 assert.match(
   loginRoute,
@@ -33,5 +35,9 @@ assert.doesNotMatch(
 assert.match(trialLogic, /TRIAL_DAYS\s*=\s*15/, 'free trial must remain capped at 15 days');
 assert.match(trialLogic, /created_at/, 'trial access must be anchored to gymassistai_users.created_at');
 assert.match(trialLogic, /paid_until/, 'paid access should have a non-trial unlock path');
+assert.match(loginUi, /Referral code \(optional\)/, 'signup UI must expose optional referral code input');
+assert.match(signupRoute, /referral/, 'signup route must attempt to persist referral codes');
+assert.match(authSchema, /add column if not exists referral text/, 'auth schema must include nullable referral tracking');
+assert.doesNotMatch(memberTableSchema, /add column if not exists referral text/, 'per-gym member tables must not track owner referral codes');
 
 console.log('Auth schema checks passed');
